@@ -4,7 +4,6 @@ import com.kob.backend.pojo.User;
 import com.kob.backend.service.impl.utils.UserDetailsImpl;
 import com.kob.backend.service.user.account.LoginService;
 import com.kob.backend.utils.JwtUtil;
-import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -25,7 +24,7 @@ public class LoginServiceImpl implements LoginService {
         UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(username, password);
 
-        Authentication authenticate = authenticationManager.authenticate(authenticationToken);
+        Authentication authenticate = authenticationManager.authenticate(authenticationToken);  // 登录失败，会自动处理
         UserDetailsImpl loginUser = (UserDetailsImpl) authenticate.getPrincipal();
         User user = loginUser.getUser();
         String jwt = JwtUtil.createJWT(user.getId().toString());

@@ -38,7 +38,7 @@ public class RegisterServiceImpl implements RegisterService {
             return map;
         }
 
-        if (confirmedPassword.length() == 0) {
+        if (password.length() == 0 || confirmedPassword.length() == 0) {
             map.put("error_message", "密码不能为空");
             return map;
         }
@@ -54,7 +54,7 @@ public class RegisterServiceImpl implements RegisterService {
         }
 
         if (!password.equals(confirmedPassword)) {
-            map.put("error_message", "两次密码不一致");
+            map.put("error_message", "两次输入的密码不一致");
             return map;
         }
 
@@ -66,9 +66,9 @@ public class RegisterServiceImpl implements RegisterService {
             return map;
         }
 
-        String encodePassword = passwordEncoder.encode(password);
+        String encodedPassword = passwordEncoder.encode(password);
         String photo = "https://cdn.acwing.com/media/user/profile/photo/1_lg_844c66b332.jpg";
-        User user = new User(null, username, encodePassword, photo);
+        User user = new User(null, username, encodedPassword, photo, 1500);
         userMapper.insert(user);
 
         map.put("error_message", "success");

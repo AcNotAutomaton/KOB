@@ -14,10 +14,10 @@ import java.util.Map;
 public class InfoServiceImpl implements InfoService {
     @Override
     public Map<String, String> getinfo() {
-        UsernamePasswordAuthenticationToken authenticationToken =
+        UsernamePasswordAuthenticationToken authentication =
                 (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 
-        UserDetailsImpl loginUser = (UserDetailsImpl) authenticationToken.getPrincipal();
+        UserDetailsImpl loginUser = (UserDetailsImpl) authentication.getPrincipal();
         User user = loginUser.getUser();
 
         Map<String, String> map = new HashMap<>();

@@ -27,8 +27,8 @@
 
 <script>
 import ContentField from '../../../components/ContentField.vue'
-import { ref } from 'vue';
-import router from '../../../router/index';
+import { ref } from 'vue'
+import router from '../../../router/index'
 import $ from 'jquery'
 
 export default {
@@ -43,7 +43,7 @@ export default {
 
         const register = () => {
             $.ajax({
-                url: "http://127.0.0.1:3000/user/account/register",
+                url: "http://127.0.0.1:3000/api/user/account/register/",
                 type: "post",
                 data: {
                     username: username.value,
@@ -65,7 +65,7 @@ export default {
             password,
             confirmedPassword,
             error_message,
-            register
+            register,
         }
     }
 }
