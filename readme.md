@@ -3,4 +3,4 @@
 项目成品参考[在线的程序对抗平台](https://www.botzone.org.cn/)
 
 #### find . -name '*.java' | xargs cat | wc -l
-添加一个查询Java文件代码总行数的命令
+一个查询Java文件代码总行数的命令
