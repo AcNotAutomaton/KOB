@@ -9,12 +9,14 @@
   },
   "dependencies": {
     "@popperjs/core": "^2.11.6",
+    "ace-builds": "^1.11.0",
     "bootstrap": "^5.2.1",
     "core-js": "^3.8.3",
     "jquery": "^3.6.1",
     "node-modules-regexp": "^1.0.0",
     "vue": "^3.2.13",
     "vue-router": "^4.0.3",
+    "vue3-ace-editor": "^2.2.2",
     "vuex": "^4.0.0"
   },
   "devDependencies": {
