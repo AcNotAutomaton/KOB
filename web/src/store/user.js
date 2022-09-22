@@ -7,7 +7,7 @@ export default {
         photo: "",
         token: "",
         is_login: false,
-        pulling_info: true,
+        pulling_info: true,  // 是否正在从云端拉取信息
     },
     getters: {
     },
