@@ -59,15 +59,11 @@ export class Snake extends AcGameObject {
         this.eye_direction = d;
         this.direction = -1;  // 清空操作
         this.status = "move";
-        this.step++;
+        this.step ++ ;
 
         const k = this.cells.length;
-        for (let i = k; i > 0; i--) {
+        for (let i = k; i > 0; i -- ) {
             this.cells[i] = JSON.parse(JSON.stringify(this.cells[i - 1]));
-        }
-
-        if (!this.gamemap.check_valid(this.next_cell)) {  // 下一步操作撞了，蛇瞬间去世
-            this.status = "die";
         }
     }
 
@@ -123,7 +119,7 @@ export class Snake extends AcGameObject {
             ctx.fill();
         }
 
-        for (let i = 1; i < this.cells.length; i++) {
+        for (let i = 1; i < this.cells.length; i ++ ) {
             const a = this.cells[i - 1], b = this.cells[i];
             if (Math.abs(a.x - b.x) < this.eps && Math.abs(a.y - b.y) < this.eps)
                 continue;
@@ -135,7 +131,7 @@ export class Snake extends AcGameObject {
         }
 
         ctx.fillStyle = "black";
-        for (let i = 0; i < 2; i++) {
+        for (let i = 0; i < 2; i ++ ) {
             const eye_x = (this.cells[0].x + this.eye_dx[this.eye_direction][i] * 0.15) * L;
             const eye_y = (this.cells[0].y + this.eye_dy[this.eye_direction][i] * 0.15) * L;
 
