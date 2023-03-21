@@ -1,5 +1,6 @@
 package com.kob.matchingsystem.service.impl.utils;
 
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
@@ -12,10 +13,12 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @Component
 public class MatchingPool extends Thread {
+
+
     private static List<Player> players = new ArrayList<>();
     private final ReentrantLock lock = new ReentrantLock();
     private static RestTemplate restTemplate;
-    private final static String startGameUrl = "https://127.0.0.1:3000/pk/start/game/";
+    private final static String startGameUrl = "http://127.0.0.1:3000/pk/start/game/";
 
     @Autowired
     public void setRestTemplate(RestTemplate restTemplate) {
@@ -23,6 +26,12 @@ public class MatchingPool extends Thread {
     }
 
     public void addPlayer(Integer userId, Integer rating, Integer botId) {
+        System.out.println("新的来了。。。。" + botId);
+        if(botId.equals(-2)){//直接和ai配对
+            sendResult(new Player(userId,rating,botId,10),
+                    new Player(4,1500,3,10));
+            return ;
+        }
         lock.lock();
         try {
             players.add(new Player(userId, rating, botId, 0));

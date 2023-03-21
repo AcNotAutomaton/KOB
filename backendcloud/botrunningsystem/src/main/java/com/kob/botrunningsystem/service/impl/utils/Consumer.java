@@ -17,7 +17,7 @@ import java.util.function.Supplier;
 public class Consumer extends Thread {
     private Bot bot;
     private static RestTemplate restTemplate;
-    private final static String receiveBotMoveUrl = "https://127.0.0.1:3000/pk/receive/bot/move/";
+    private final static String receiveBotMoveUrl = "http://127.0.0.1:3000/pk/receive/bot/move/";
 
     @Autowired
     public void setRestTemplate(RestTemplate restTemplate) {
@@ -66,6 +66,7 @@ public class Consumer extends Thread {
         MultiValueMap<String, String> data = new LinkedMultiValueMap<>();
         data.add("user_id", bot.getUserId().toString());
         data.add("direction", direction.toString());
+        data.add("enemy_id",bot.getEnemy().toString());
 
         restTemplate.postForObject(receiveBotMoveUrl, data, String.class);
     }

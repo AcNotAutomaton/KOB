@@ -26,7 +26,7 @@ public class Game extends Thread {
     private ReentrantLock lock = new ReentrantLock();
     private String status = "playing";  // playing -> finished
     private String loser = "";  // all: 平局，A: A输，B: B输
-    private final static String addBotUrl = "https://127.0.0.1:3002/bot/add/";
+    private final static String addBotUrl = "http://127.0.0.1:3002/bot/add/";
 
     public Game(
             Integer rows,
@@ -163,11 +163,13 @@ public class Game extends Thread {
                 you.getStepsString() + ")";
     }
 
-    private void sendBotCode(Player player) {
+    private void sendBotCode(Player player,String enemy) {
         if (player.getBotId().equals(-1)) return;  // 亲自出马，不需要执行代码
+        System.out.println("执行代码了吗");
         MultiValueMap<String, String> data = new LinkedMultiValueMap<>();
         data.add("user_id", player.getId().toString());
         data.add("bot_code", player.getBotCode());
+        data.add("enemy_id",enemy);
         data.add("input", getInput(player));
         WebSocketServer.restTemplate.postForObject(addBotUrl, data, String.class);
     }
@@ -179,8 +181,8 @@ public class Game extends Thread {
             throw new RuntimeException(e);
         }
 
-        sendBotCode(playerA);
-        sendBotCode(playerB);
+        sendBotCode(playerA, String.valueOf(playerB.getId()));
+        sendBotCode(playerB, String.valueOf(playerA.getId()));
 
         for (int i = 0; i < 50; i ++ ) {
             try {
@@ -199,7 +201,8 @@ public class Game extends Thread {
                 e.printStackTrace();
             }
         }
-
+        System.out.println("nextStepA = " + nextStepA);
+        System.out.println("nextStepB = " + nextStepB);
         return false;
     }
 
@@ -224,12 +227,10 @@ public class Game extends Thread {
     private void judge() {  // 判断两名玩家下一步操作是否合法
         List<Cell> cellsA = playerA.getCells();
         List<Cell> cellsB = playerB.getCells();
-
         boolean validA = check_valid(cellsA, cellsB);
         boolean validB = check_valid(cellsB, cellsA);
         if (!validA || !validB) {
             status = "finished";
-
             if (!validA && !validB) {
                 loser = "all";
             } else if (!validA) {
@@ -280,7 +281,8 @@ public class Game extends Thread {
     private void saveToDatabase() {
         Integer ratingA = WebSocketServer.userMapper.selectById(playerA.getId()).getRating();
         Integer ratingB = WebSocketServer.userMapper.selectById(playerB.getId()).getRating();
-
+        System.out.println("ratingB = " + ratingB);
+        System.out.println("ratingA = " + ratingA);
         if ("A".equals(loser)) {
             ratingA -= 2;
             ratingB += 5;
@@ -320,6 +322,7 @@ public class Game extends Thread {
 
     @Override
     public void run() {
+        System.out.println(666666666);
         for (int i = 0; i < 1000; i ++ ) {
             if (nextStep()) {  // 是否获取了两条蛇的下一步操作
                 judge();

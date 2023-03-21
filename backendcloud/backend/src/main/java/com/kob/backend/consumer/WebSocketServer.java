@@ -36,8 +36,8 @@ public class WebSocketServer {
     private static BotMapper botMapper;
     public static RestTemplate restTemplate;
     public Game game = null;
-    private final static String addPlayerUrl = "https://127.0.0.1:3001/player/add/";
-    private final static String removePlayerurl = "https://127.0.0.1:3001/player/remove/";
+    private final static String addPlayerUrl = "http://127.0.0.1:3001/player/add/";
+    private final static String removePlayerurl = "http://127.0.0.1:3001/player/remove/";
 
     @Autowired
     public void setUserMapper(UserMapper userMapper) {
@@ -83,7 +83,9 @@ public class WebSocketServer {
     public static void startGame(Integer aId, Integer aBotId, Integer bId, Integer bBotId) {
         User a = userMapper.selectById(aId), b = userMapper.selectById(bId);
         Bot botA = botMapper.selectById(aBotId), botB = botMapper.selectById(bBotId);
-
+        System.out.println("都过来了");
+        System.out.println(a);
+        System.out.println(b);
         Game game = new Game(
                 13,
                 14,
@@ -93,6 +95,8 @@ public class WebSocketServer {
                 b.getId(),
                 botB
         );
+        System.out.println("botA = " + botA);
+        System.out.println("botB = " + botB);
         game.createMap();
         if (users.get(a.getId()) != null)
             users.get(a.getId()).game = game;
@@ -125,6 +129,9 @@ public class WebSocketServer {
         respB.put("game", respGame);
         if (users.get(b.getId()) != null)
             users.get(b.getId()).sendMessage(respB.toJSONString());
+        else{
+            System.out.println("66666");
+        }
     }
 
     private void startMatching(Integer botId) {
@@ -159,6 +166,7 @@ public class WebSocketServer {
         System.out.println("receive message!");
         JSONObject data = JSONObject.parseObject(message);
         String event = data.getString("event");
+        System.out.println(event);
         if ("start-matching".equals(event)) {
             startMatching(data.getInteger("bot_id"));
         } else if ("stop-matching".equals(event)) {

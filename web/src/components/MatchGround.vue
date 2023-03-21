@@ -13,6 +13,7 @@
                 <div class="user-select-bot">
                     <select v-model="select_bot" class="form-select" aria-label="Default select example">
                         <option value="-1" selected>亲自出马</option>
+                        <option value="-2" selected>AI</option>
                         <option v-for="bot in bots" :key="bot.id" :value="bot.id">
                             {{ bot.title }}
                         </option>
@@ -64,7 +65,7 @@ export default {
 
         const refresh_bots = () => {
             $.ajax({
-                url: "http://127.0.0.1:3000/api/user/bot/getlist/",
+                url: "http://123.56.126.125:3000/api/user/bot/getlist/",
                 type: "get",
                 headers: {
                     Authorization: "Bearer " + store.state.user.token,
