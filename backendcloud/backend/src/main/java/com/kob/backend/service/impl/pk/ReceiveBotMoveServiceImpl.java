@@ -15,8 +15,8 @@ public class ReceiveBotMoveServiceImpl implements ReceiveBotMoveService {
         if (WebSocketServer.users.get(userId) != null||WebSocketServer.users.get(enemy) != null) {
             System.out.println("ai又动了....................");
             Game game = null;
-            if(WebSocketServer.users.get(enemy).game!=null) game = WebSocketServer.users.get(enemy).game;
-            else game = WebSocketServer.users.get(userId).game;
+            if(enemy.equals(4)) game = WebSocketServer.users.get(userId).game;
+            else game = WebSocketServer.users.get(enemy).game;
             if (game != null) {
                 if (game.getPlayerA().getId().equals(userId)) {
                     game.setNextStepA(direction);

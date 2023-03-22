@@ -27,6 +27,13 @@ public class MatchingPool extends Thread {
 
     public void addPlayer(Integer userId, Integer rating, Integer botId) {
         System.out.println("新的来了。。。。" + botId);
+        if(botId>666){
+            String id = String.valueOf(botId);
+            String substring = id.substring(0, id.length() - 3);
+            sendResult(new Player(userId,rating,Integer.parseInt(substring),10),
+                    new Player(4,1500,3,10));
+            return ;
+        }
         if(botId.equals(-2)){//直接和ai配对
             sendResult(new Player(userId,rating,botId,10),
                     new Player(4,1500,3,10));

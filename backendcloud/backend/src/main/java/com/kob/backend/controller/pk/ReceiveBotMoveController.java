@@ -16,9 +16,11 @@ public class ReceiveBotMoveController {
 
     @PostMapping("/pk/receive/bot/move/")
     public String receiveBotMove(@RequestParam MultiValueMap<String, String> data) {
+        System.out.println("移动吧");
         Integer userId = Integer.parseInt(Objects.requireNonNull(data.getFirst("user_id")));
         Integer direction = Integer.parseInt(Objects.requireNonNull(data.getFirst("direction")));
         Integer enemy = Integer.parseInt(Objects.requireNonNull(data.getFirst("enemy_id")));
+
         return receiveBotMoveService.receiveBotMove(userId, direction, enemy);
     }
 }

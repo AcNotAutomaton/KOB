@@ -13,9 +13,13 @@
                 <div class="user-select-bot">
                     <select v-model="select_bot" class="form-select" aria-label="Default select example">
                         <option value="-1" selected>亲自出马</option>
-                        <option value="-2" selected>AI</option>
                         <option v-for="bot in bots" :key="bot.id" :value="bot.id">
                             {{ bot.title }}
+                        </option>
+                        <option value="-666"  disabled>下面是bot和AI玩</option>
+                        <option value="-2" selected>本人 VS AI</option>
+                        <option v-for="bot in bots" :key="bot.id" :value="bot.id + '666'">
+                            {{ bot.title }} VS AI
                         </option>
                     </select>
                 </div>
@@ -49,6 +53,7 @@ export default {
         let select_bot = ref("-1");
 
         const click_match_btn = () => {
+            console.log(select_bot.value)
             if (match_btn_info.value === "开始匹配") {
                 match_btn_info.value = "取消";
                 store.state.pk.socket.send(JSON.stringify({
