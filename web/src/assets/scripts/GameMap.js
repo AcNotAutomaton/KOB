@@ -5,7 +5,7 @@ import { Snake } from './Snake';
 export class GameMap extends AcGameObject {
     constructor(ctx, parent, store) {
         super();
-
+        
         this.ctx = ctx;
         this.parent = parent;
         this.store = store;
@@ -40,7 +40,6 @@ export class GameMap extends AcGameObject {
 
         if (this.store.state.record.is_record) {
             let k = 0;
-
             const a_steps = this.store.state.record.a_steps;
             const b_steps = this.store.state.record.b_steps;
             const loser = this.store.state.record.record_loser;
@@ -54,7 +53,9 @@ export class GameMap extends AcGameObject {
                         snake1.status = "die";
                     }
                     clearInterval(interval_id);
+                    this.store.commit("updateProgress",100 )
                 } else {
+                    this.store.commit("updateProgress",(k+1)/a_steps.length*100 )
                     snake0.set_direction(parseInt(a_steps[k]));
                     snake1.set_direction(parseInt(b_steps[k]));
                 }

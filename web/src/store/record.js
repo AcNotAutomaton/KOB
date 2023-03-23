@@ -4,10 +4,14 @@ export default {
         a_steps: "",
         b_steps: "",
         record_loser: "",
+        progress_bar:0,
     },
     getters: {
     },
     mutations: {
+        updateProgress(state, progress_bar){
+            state.progress_bar = progress_bar
+        },
         updateIsRecord(state, is_record) {
             state.is_record = is_record;
         },

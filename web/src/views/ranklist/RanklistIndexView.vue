@@ -4,6 +4,7 @@
             <thead>
                 <tr>
                     <th>玩家</th>
+                    <th>对局次数</th>
                     <th>天梯分</th>
                 </tr>
             </thead>
@@ -14,6 +15,7 @@
                         &nbsp;
                         <span class="record-user-username">{{ user.username }}</span>
                     </td>
+                    <td>15</td>
                     <td>{{ user.rating }}</td>
                 </tr>
             </tbody>
@@ -92,6 +94,7 @@ export default {
                     console.log(users.value);
                     total_users = resp.users_count;
                     udpate_pages();
+
                 },
                 error(resp) {
                     console.log(resp);

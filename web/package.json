@@ -8,6 +8,7 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "@kangc/v-md-editor": "^2.3.15",
     "@popperjs/core": "^2.11.6",
     "ace-builds": "^1.11.0",
     "bootstrap": "^5.2.1",
