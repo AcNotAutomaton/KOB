@@ -1,17 +1,15 @@
 /*
- Navicat Premium Data Transfer
+Navicat Premium Data Transfer
 
- Source Server         : beink
- Source Server Type    : MySQL
- Source Server Version : 50740
- Source Host           : localhost:3306
- Source Schema         : kob
+Source Server Type    : MySQL
+Source Server Version : 50740
+Source Host           : localhost:3306
+Source Schema         : kob
 
- Target Server Type    : MySQL
- Target Server Version : 50740
- File Encoding         : 65001
+Target Server Type    : MySQL
+Target Server Version : 50740
+File Encoding         : 65001
 
- Date: 26/03/2023 11:02:05
 */
 
 SET NAMES utf8mb4;
