@@ -16,7 +16,7 @@
                         <option v-for="bot in bots" :key="bot.id" :value="bot.id">
                             {{ bot.title }}
                         </option>
-                        <option value="-666"  disabled>下面是bot和AI玩</option>
+                        <option value="-666" disabled>下面是bot和AI玩</option>
                         <option value="-2" selected>本人 VS AI</option>
                         <option v-for="bot in bots" :key="bot.id" :value="bot.id + '666'">
                             {{ bot.title }} VS AI
@@ -70,7 +70,7 @@ export default {
 
         const refresh_bots = () => {
             $.ajax({
-                url: "http://123.56.126.125:3000/api/user/bot/getlist/",
+                url: "http://8.130.99.166/api/user/bot/getlist/",
                 type: "get",
                 headers: {
                     Authorization: "Bearer " + store.state.user.token,

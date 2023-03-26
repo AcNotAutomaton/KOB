@@ -15,12 +15,14 @@
                     <td>
                         <img :src="record.a_photo" alt="" class="record-user-photo">
                         &nbsp;
-                        <span :class="[record.result === 'A胜' ? 'text-bg-primary' : 'text-bg-light','badge']" class="record-user-username">{{ record.a_username }}</span>
+                        <span :class="[record.result === 'A胜' ? 'text-bg-primary' : 'text-bg-light', 'badge']"
+                            class="record-user-username">{{ record.a_username }}</span>
                     </td>
                     <td>
                         <img :src="record.b_photo" alt="" class="record-user-photo">
                         &nbsp;
-                        <span :class="[record.result === 'B胜' ? 'text-bg-primary' : 'text-bg-light','badge']" class="record-user-username">{{ record.b_username }}</span>
+                        <span :class="[record.result === 'B胜' ? 'text-bg-primary' : 'text-bg-light', 'badge']"
+                            class="record-user-username">{{ record.b_username }}</span>
                     </td>
                     <td>{{ record.result }}</td>
                     <td>{{ record.record.createtime }}</td>
@@ -93,7 +95,7 @@ export default {
         const pull_page = page => {
             current_page = page;
             $.ajax({
-                url: "http://123.56.126.125:3000/api/record/getlist/",
+                url: "http://8.130.99.166/api/record/getlist/",
                 data: {
                     page,
                 },
@@ -145,7 +147,7 @@ export default {
                         a_steps: record.record.asteps,
                         b_steps: record.record.bsteps,
                     });
-                    store.commit("updateProgress",0)
+                    store.commit("updateProgress", 0)
                     store.commit("updateRecordLoser", record.record.loser);
                     router.push({
                         name: "record_content",

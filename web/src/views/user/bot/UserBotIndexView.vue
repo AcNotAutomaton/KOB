@@ -46,8 +46,7 @@
                                     <div class="modal-footer">
                                         <div class="error-message">{{ botadd.error_message }}</div>
                                         <button type="button" class="btn btn-primary" @click="add_bot">创建</button>
-                                        <button type="button" class="btn btn-secondary"
-                                            data-bs-dismiss="modal">取消</button>
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
                                     </div>
                                 </div>
                             </div>
@@ -70,8 +69,7 @@
                                         <button type="button" class="btn btn-secondary" style="margin-right: 10px;"
                                             data-bs-toggle="modal"
                                             :data-bs-target="'#update-bot-modal-' + bot.id">修改</button>
-                                        <button type="button" class="btn btn-danger"
-                                            @click="remove_bot(bot)">删除</button>
+                                        <button type="button" class="btn btn-danger" @click="remove_bot(bot)">删除</button>
 
                                         <div class="modal fade" :id="'update-bot-modal-' + bot.id" tabindex="-1">
                                             <div class="modal-dialog modal-xl">
@@ -88,8 +86,7 @@
                                                                 id="add-bot-title" placeholder="请输入Bot名称">
                                                         </div>
                                                         <div class="mb-3">
-                                                            <label for="add-bot-description"
-                                                                class="form-label">简介</label>
+                                                            <label for="add-bot-description" class="form-label">简介</label>
                                                             <textarea v-model="bot.description" class="form-control"
                                                                 id="add-bot-description" rows="3"
                                                                 placeholder="请输入Bot简介"></textarea>
@@ -150,7 +147,7 @@ export default {
 
         const refresh_bots = () => {
             $.ajax({
-                url: "http://123.56.126.125:3000/api/user/bot/getlist/",
+                url: "http://8.130.99.166/api/user/bot/getlist/",
                 type: "get",
                 headers: {
                     Authorization: "Bearer " + store.state.user.token,
@@ -166,7 +163,7 @@ export default {
         const add_bot = () => {
             botadd.error_message = "";
             $.ajax({
-                url: "http://123.56.126.125:3000/api/user/bot/add/",
+                url: "http://8.130.99.166/api/user/bot/add/",
                 type: "post",
                 data: {
                     title: botadd.title,
@@ -193,7 +190,7 @@ export default {
         const update_bot = (bot) => {
             botadd.error_message = "";
             $.ajax({
-                url: "http://123.56.126.125:3000/api/user/bot/update/",
+                url: "http://8.130.99.166/api/user/bot/update/",
                 type: "post",
                 data: {
                     bot_id: bot.id,
@@ -217,7 +214,7 @@ export default {
 
         const remove_bot = (bot) => {
             $.ajax({
-                url: "http://123.56.126.125:3000/api/user/bot/remove/",
+                url: "http://8.130.99.166/api/user/bot/remove/",
                 type: "post",
                 data: {
                     bot_id: bot.id,
