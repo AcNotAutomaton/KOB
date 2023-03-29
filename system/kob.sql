@@ -1,14 +1,14 @@
 /*
-Navicat Premium Data Transfer
+ Navicat Premium Data Transfer
 
-Source Server Type    : MySQL
-Source Server Version : 50740
-Source Host           : localhost:3306
-Source Schema         : kob
+ Source Server Type    : MySQL
+ Source Server Version : 80032
+ Source Host           : localhost:3306
+ Source Schema         : kob
 
-Target Server Type    : MySQL
-Target Server Version : 50740
-File Encoding         : 65001
+ Target Server Type    : MySQL
+ Target Server Version : 80032
+ File Encoding         : 65001
 
 */
 
@@ -20,10 +20,10 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- ----------------------------
 DROP TABLE IF EXISTS `article`;
 CREATE TABLE `article`  (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id` int NOT NULL AUTO_INCREMENT,
   `markdown` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of article
@@ -35,17 +35,17 @@ INSERT INTO `article` VALUES (1, '# King Of Bots简称KOB\n一个策略类AI的�
 -- ----------------------------
 DROP TABLE IF EXISTS `bot`;
 CREATE TABLE `bot`  (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `user_id` int(11) NOT NULL,
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
   `title` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
   `description` varchar(300) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
   `content` varchar(10000) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
-  `rating` int(11) NULL DEFAULT 1500,
+  `rating` int NULL DEFAULT 1500,
   `createtime` datetime NULL DEFAULT NULL,
   `modifytime` datetime NULL DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `table_name_id_uindex`(`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 8 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 8 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of bot
@@ -60,20 +60,20 @@ INSERT INTO `bot` VALUES (7, 2, 'af', 'faf', 'package com.kob.botrunningsystem.u
 -- ----------------------------
 DROP TABLE IF EXISTS `record`;
 CREATE TABLE `record`  (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `a_id` int(11) NULL DEFAULT NULL,
-  `a_sx` int(11) NULL DEFAULT NULL,
-  `a_sy` int(11) NULL DEFAULT NULL,
-  `b_id` int(11) NULL DEFAULT NULL,
-  `b_sx` int(11) NULL DEFAULT NULL,
-  `b_sy` int(11) NULL DEFAULT NULL,
+  `id` int NOT NULL AUTO_INCREMENT,
+  `a_id` int NULL DEFAULT NULL,
+  `a_sx` int NULL DEFAULT NULL,
+  `a_sy` int NULL DEFAULT NULL,
+  `b_id` int NULL DEFAULT NULL,
+  `b_sx` int NULL DEFAULT NULL,
+  `b_sy` int NULL DEFAULT NULL,
   `a_steps` varchar(1000) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
   `b_steps` varchar(1000) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
   `map` varchar(1000) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
   `loser` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
   `createtime` datetime NULL DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 126 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 127 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of record
@@ -203,30 +203,32 @@ INSERT INTO `record` VALUES (122, 9, 11, 1, 4, 1, 12, '1103011110011010032323322
 INSERT INTO `record` VALUES (123, 9, 11, 1, 4, 1, 12, '1111111111003300', '2222223003032221', '11111111111111110000000000011100010001000110000110000001101101000000011000000000000110010000001001100000000000011000000010110110000001100001100010001000111000000000001111111111111111', 'A', '2023-03-24 15:04:47');
 INSERT INTO `record` VALUES (124, 9, 11, 1, 4, 1, 12, '1111111100300033330303321232111111010000323322123303323001103001111111112212', '2222223003032333300300111112222223221112123333300322300033011111100300121211', '11111111111111100000000000011001010000100111000000001001100010110001011000000000000110010000001001100000000000011010001101000110010000000011100100001010011000000000000111111111111111', 'A', '2023-03-24 15:05:37');
 INSERT INTO `record` VALUES (125, 9, 11, 1, 4, 1, 12, '0010112211111000003333333321111211111', '2222223000330030332223330101033323220', '11111111111111110000000101011001000000010110100000001001101000000000011000000000100110000011000001100100000000011000000000010110010000000101101000000010011010100000001111111111111111', 'B', '2023-03-24 15:05:59');
+INSERT INTO `record` VALUES (126, 1, 11, 1, 4, 1, 12, '0000000100011111221112222332300030300011221110101222222230000322222', '2222222300000001222222233323233030032230000000032222321232123221010', '11111111111111100000001110011000000011000111000010000001100000010000011000000000000110001100110001100000000000011000001000000110000001000011100011000000011001110000000111111111111111', 'B', '2023-03-27 09:10:21');
 
 -- ----------------------------
 -- Table structure for user
 -- ----------------------------
 DROP TABLE IF EXISTS `user`;
 CREATE TABLE `user`  (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id` int NOT NULL AUTO_INCREMENT,
   `username` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
   `password` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
   `photo` varchar(1000) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
-  `rating` int(11) NULL DEFAULT 1500,
+  `rating` int NULL DEFAULT 1500,
+  `times` int NULL DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 10 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 10 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of user
 -- ----------------------------
-INSERT INTO `user` VALUES (1, '123', '$2a$10$Naz79w.nio0t4IT0d8QrUuAOHx9BKhC5EzBguA/Uxgq9Qon3Rwp6W', 'https://cdn.acwing.com/media/user/profile/photo/1_lg_ac71ddd4ad.jpg', 1554);
-INSERT INTO `user` VALUES (2, '111', '$2a$10$niR9B/ikD.WWZkv9yuhjqOcIh6f36knwNk8MLuBSweSZUwZmIIas6', 'https://cdn.acwing.com/media/user/profile/photo/1_lg_ac71ddd4ad.jpg', 1553);
-INSERT INTO `user` VALUES (3, 'cly', '$2a$10$Hvb5pSHxweXusDovi4LvGOdewZ.PFJ0WT7IhGXRv2.PpdL/vX8caG', 'https://cdn.acwing.com/media/user/profile/photo/86034_lg_a0ae539ee2.jpg', 1581);
-INSERT INTO `user` VALUES (4, '无敌的bot', '$2a$10$XPJ2QfsW5U6y2QE08fBdOun.WmbmBmQ/H9QChh6RzINEWTdlJw7VO', 'http://blog.beink.cn/favicon.ico', 1650);
-INSERT INTO `user` VALUES (6, 'wg', '$2a$10$RlpHyA2Xl9wKaPhdVbCLzum41CK6/CUMFoXgQDvN03ES4clP.g8p.', 'https://cdn.acwing.com/media/user/profile/photo/226809_lg_2fcfb9ed3a.jpg', 1500);
-INSERT INTO `user` VALUES (7, 'fusong', '$2a$10$yOT2E29yE4eoyGtfnPZJjOzEEZxpOkIFlAn7sGAVzh184MIJo2pYK', 'https://cdn.acwing.com/media/user/profile/photo/229336_lg_2fb5c2d53f.jpg', 1510);
-INSERT INTO `user` VALUES (8, 'spx', '$2a$10$S/RkD8y1p1o6ZJ4cDq1hMuVNVFXxxHJjrVuNE6.5HqOicrc1JUH9i', 'https://cdn.acwing.com/media/user/profile/photo/228025_lg_a6ae437e3c.jpg', 1517);
-INSERT INTO `user` VALUES (9, 'Tom', '$2a$10$2F3miBnUwXV2wRZLZ1HUNuqG1uBUi6MK8xKDOHX/VYu/UHhXIj1Te', 'https://cdn.acwing.com/media/user/profile/photo/71127_lg_5c719f083a.png', 1502);
+INSERT INTO `user` VALUES (1, '123', '$2a$10$Naz79w.nio0t4IT0d8QrUuAOHx9BKhC5EzBguA/Uxgq9Qon3Rwp6W', 'https://cdn.acwing.com/media/user/profile/photo/1_lg_ac71ddd4ad.jpg', 1559, 23);
+INSERT INTO `user` VALUES (2, '111', '$2a$10$niR9B/ikD.WWZkv9yuhjqOcIh6f36knwNk8MLuBSweSZUwZmIIas6', 'https://cdn.acwing.com/media/user/profile/photo/1_lg_ac71ddd4ad.jpg', 1553, 23);
+INSERT INTO `user` VALUES (3, 'cly', '$2a$10$Hvb5pSHxweXusDovi4LvGOdewZ.PFJ0WT7IhGXRv2.PpdL/vX8caG', 'https://cdn.acwing.com/media/user/profile/photo/86034_lg_a0ae539ee2.jpg', 1581, 32);
+INSERT INTO `user` VALUES (4, '无敌的bot', '$2a$10$XPJ2QfsW5U6y2QE08fBdOun.WmbmBmQ/H9QChh6RzINEWTdlJw7VO', 'https://cdn.acwing.com/media/article/image/2022/07/07/1_d7f3b93efd-kob.png', 1648, 57);
+INSERT INTO `user` VALUES (6, 'wg', '$2a$10$RlpHyA2Xl9wKaPhdVbCLzum41CK6/CUMFoXgQDvN03ES4clP.g8p.', 'https://cdn.acwing.com/media/user/profile/photo/226809_lg_2fcfb9ed3a.jpg', 1500, 43);
+INSERT INTO `user` VALUES (7, 'fusong', '$2a$10$yOT2E29yE4eoyGtfnPZJjOzEEZxpOkIFlAn7sGAVzh184MIJo2pYK', 'https://cdn.acwing.com/media/user/profile/photo/229336_lg_2fb5c2d53f.jpg', 1510, 22);
+INSERT INTO `user` VALUES (8, 'spx', '$2a$10$S/RkD8y1p1o6ZJ4cDq1hMuVNVFXxxHJjrVuNE6.5HqOicrc1JUH9i', 'https://cdn.acwing.com/media/user/profile/photo/228025_lg_a6ae437e3c.jpg', 1517, 54);
+INSERT INTO `user` VALUES (9, 'Tom', '$2a$10$2F3miBnUwXV2wRZLZ1HUNuqG1uBUi6MK8xKDOHX/VYu/UHhXIj1Te', 'https://cdn.acwing.com/media/user/profile/photo/71127_lg_5c719f083a.png', 1502, 44);
 
 SET FOREIGN_KEY_CHECKS = 1;
