@@ -41,6 +41,13 @@ public class MatchingPool extends Thread {
         }
         lock.lock();
         try {
+            for (Player player: players) {
+                if(player.getUserId().equals(userId)){
+                    System.out.println("重复 踢出去");
+                    removePlayer(userId);
+                    break;
+                }
+            }
             players.add(new Player(userId, rating, botId, 0));
         } finally {
             lock.unlock();

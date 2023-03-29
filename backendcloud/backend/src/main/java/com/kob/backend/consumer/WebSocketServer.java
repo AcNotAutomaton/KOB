@@ -63,6 +63,12 @@ public class WebSocketServer {
         Integer userId = JwtAuthentication.getUserId(token);
         this.user = userMapper.selectById(userId);
 
+        if(users.contains(user)){
+            System.out.println("已经存在一个了");
+            onClose();
+        }
+        System.out.println("this.user = " + this.user);
+
         if (this.user != null) {
             users.put(userId, this);
         } else {

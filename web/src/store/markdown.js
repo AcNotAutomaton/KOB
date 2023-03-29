@@ -14,7 +14,7 @@ export default {
     actions: {
         showMarkdown(context) {
             $.ajax({
-                url: "http://8.130.99.166/api/user/account/showmarkdown/",
+                url: "http://127.0.0.1:3000/api/user/account/showmarkdown/",
                 type: "post",
                 success(res) {
                     context.commit("updateMarkdown", res)
@@ -24,7 +24,7 @@ export default {
 
         updateMarkdown(context, value) {
             $.ajax({
-                url: "http://8.130.99.166/api/user/account/updatemarkdown/",
+                url: "http://127.0.0.1:3000/api/user/account/updatemarkdown/",
                 type: "post",
                 headers: {
                     Authorization: "Bearer " + localStorage.getItem("jwt_token"),
