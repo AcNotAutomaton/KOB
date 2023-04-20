@@ -14,13 +14,13 @@
             <tbody>
                 <tr v-for="record in records" :key="record.record.id">
                     <td>
-                        <img :src="record.a_photo" alt="" class="record-user-photo">
+                        <img @click="go_users(record.record.aid)" :src="record.a_photo" alt="" class="record-user-photo">
                         &nbsp;
                         <span :class="[record.result === 'A胜' ? 'text-bg-primary' : 'text-bg-light', 'badge']"
                             class="record-user-username">{{ record.a_username }}</span>
                     </td>
                     <td>
-                        <img :src="record.b_photo" alt="" class="record-user-photo">
+                        <img @click="go_users(record.record.bid)" :src="record.b_photo" alt="" class="record-user-photo">
                         &nbsp;
                         <span :class="[record.result === 'B胜' ? 'text-bg-primary' : 'text-bg-light', 'badge']"
                             class="record-user-username">{{ record.b_username }}</span>
@@ -97,7 +97,7 @@ export default {
         const pull_page = page => {
             current_page = page;
             $.ajax({
-                url: "http://8.130.99.166/api/record/getlist/",
+                url: "http://127.0.0.1:3000/api/record/getlist/",
                 data: {
                     page,
                 },
@@ -130,6 +130,10 @@ export default {
                 g.push(line);
             }
             return g;
+        }
+
+        const go_users = id =>{
+            router.push(`/users/${id}/`)
         }
 
         const open_record_content = recordId => {
@@ -166,7 +170,8 @@ export default {
             records,
             open_record_content,
             pages,
-            click_page
+            click_page,
+            go_users
         }
     }
 }
@@ -176,5 +181,6 @@ export default {
 img.record-user-photo {
     width: 4vh;
     border-radius: 50%;
+    cursor: pointer;
 }
 </style>

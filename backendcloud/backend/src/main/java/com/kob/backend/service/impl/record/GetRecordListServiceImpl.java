@@ -50,4 +50,42 @@ public class GetRecordListServiceImpl implements GetRecordListService {
 
         return resp;
     }
+
+    @Override
+    public JSONObject getUserList(Integer id) {
+        QueryWrapper<Record> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("a_id",id).or().eq("b_id",id);
+        queryWrapper.orderByDesc("id");
+        List<Record> records = recordMapper.selectList(queryWrapper);
+        JSONObject resp = new JSONObject();
+        List<JSONObject> items = new LinkedList<>();
+        for (Record record: records) {
+            User userA = userMapper.selectById(record.getAId());
+            User userB = userMapper.selectById(record.getBId());
+            JSONObject item = new JSONObject();
+            item.put("a_photo", userA.getPhoto());
+            item.put("a_username", userA.getUsername());
+            item.put("b_photo", userB.getPhoto());
+            item.put("b_username", userB.getUsername());
+            String result = "平局";
+            if ("A".equals(record.getLoser())){
+                if(userB.getId().equals(id))
+                    result = "胜利";
+                else
+                    result = "失败";
+            }
+            else if ("B".equals(record.getLoser())){
+                if(userB.getId().equals(id))
+                    result = "失败";
+                else
+                    result = "胜利";
+            }
+            item.put("result", result);
+            item.put("record", record);
+            items.add(item);
+        }
+        resp.put("records", items);
+
+        return resp;
+    }
 }

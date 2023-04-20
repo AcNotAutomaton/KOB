@@ -4,4 +4,6 @@ import com.alibaba.fastjson.JSONObject;
 
 public interface GetRecordListService {
     JSONObject getList(Integer page);
+
+    JSONObject getUserList(Integer id);
 }

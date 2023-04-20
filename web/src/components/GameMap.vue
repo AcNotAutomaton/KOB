@@ -37,7 +37,7 @@ export default {
         }
 
         const goback = ()=>{
-            router.push("/record/")
+            router.go(-1)
         }
 
         onMounted(() => {

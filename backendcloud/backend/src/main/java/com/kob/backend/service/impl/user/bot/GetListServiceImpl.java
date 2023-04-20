@@ -1,5 +1,6 @@
 package com.kob.backend.service.impl.user.bot;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.kob.backend.mapper.BotMapper;
 import com.kob.backend.pojo.Bot;
@@ -29,5 +30,16 @@ public class GetListServiceImpl implements GetListService {
         queryWrapper.eq("user_id", user.getId());
 
         return botMapper.selectList(queryWrapper);
+    }
+
+    @Override
+    public List<Bot> getUserList(Integer id) {
+        LambdaQueryWrapper<Bot> q = new LambdaQueryWrapper<>();
+        q.eq(Bot::getUserId,id);
+        List<Bot> bots = botMapper.selectList(q);
+        for(Bot i : bots){
+            i.setContent("");
+        }
+        return bots;
     }
 }

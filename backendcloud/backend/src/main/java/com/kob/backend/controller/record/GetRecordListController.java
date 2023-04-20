@@ -19,4 +19,10 @@ public class GetRecordListController {
         Integer page = Integer.parseInt(data.get("page"));
         return getRecordListService.getList(page);
     }
+
+    @GetMapping("/api/record/getuesrlist/")
+    JSONObject getUserList(@RequestParam Integer id) {
+        return getRecordListService.getUserList(id);
+    }
+
 }
