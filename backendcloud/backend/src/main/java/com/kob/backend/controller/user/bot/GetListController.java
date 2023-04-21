@@ -1,5 +1,6 @@
 package com.kob.backend.controller.user.bot;
 
+import com.alibaba.fastjson.JSONObject;
 import com.kob.backend.pojo.Bot;
 import com.kob.backend.service.user.bot.GetListService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,11 @@ public class GetListController {
     public List<Bot> getUserList(@RequestParam Integer user_id){
 
         return getListService.getUserList(user_id);
+    }
+
+    @GetMapping("/api/user/bot/getlist/alluser/")
+    public JSONObject getAllUserList(){
+        return getListService.getAllUserList();
     }
 
 }

@@ -11,7 +11,7 @@
             <tbody>
                 <tr v-for="user in users" :key="user.id">
                     <td>
-                        <img :src="user.photo" alt="" class="record-user-photo">
+                        <img @click="go_users(user.id)" :src="user.photo" alt="" class="record-user-photo">
                         &nbsp;
                         <span class="record-user-username">{{ user.username }}</span>
                     </td>
@@ -41,6 +41,7 @@
 import ContentField from '../../components/ContentField.vue'
 import { useStore } from 'vuex';
 import { ref } from 'vue';
+import router from "../../router/index"
 import $ from 'jquery';
 
 export default {
@@ -102,12 +103,18 @@ export default {
             })
         }
 
+
+        const go_users = id =>{
+            router.push(`/users/${id}/`)
+        }
+
         pull_page(current_page);
 
         return {
             users,
             pages,
-            click_page
+            click_page,
+            go_users
         }
     }
 }
@@ -117,5 +124,6 @@ export default {
 img.record-user-photo {
     width: 4vh;
     border-radius: 50%;
+    cursor: pointer;
 }
 </style>

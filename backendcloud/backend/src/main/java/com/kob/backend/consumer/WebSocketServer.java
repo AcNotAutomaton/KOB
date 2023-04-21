@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.kob.backend.consumer.utils.Game;
 import com.kob.backend.consumer.utils.JwtAuthentication;
 import com.kob.backend.mapper.BotMapper;
+import com.kob.backend.mapper.GameBotMapper;
 import com.kob.backend.mapper.RecordMapper;
 import com.kob.backend.mapper.UserMapper;
 import com.kob.backend.pojo.Bot;
@@ -33,7 +34,8 @@ public class WebSocketServer {
 
     public static UserMapper userMapper;
     public static RecordMapper recordMapper;
-    private static BotMapper botMapper;
+    public static BotMapper botMapper;
+    public static GameBotMapper gameBotMapper;
     public static RestTemplate restTemplate;
     public Game game = null;
     private final static String addPlayerUrl = "http://127.0.0.1:3001/player/add/";
@@ -46,6 +48,10 @@ public class WebSocketServer {
     @Autowired
     public void setRecordMapper(RecordMapper recordMapper) {
         WebSocketServer.recordMapper = recordMapper;
+    }
+    @Autowired
+    public void setGameBotMapper(GameBotMapper gameBotMapper) {
+        WebSocketServer.gameBotMapper = gameBotMapper;
     }
     @Autowired
     public void setBotMapper(BotMapper botMapper) {
@@ -86,6 +92,7 @@ public class WebSocketServer {
         }
     }
 
+    //TODO 这里有bot_id
     public static void startGame(Integer aId, Integer aBotId, Integer bId, Integer bBotId) {
         User a = userMapper.selectById(aId), b = userMapper.selectById(bId);
         Bot botA = botMapper.selectById(aBotId), botB = botMapper.selectById(bBotId);
@@ -140,6 +147,10 @@ public class WebSocketServer {
         }
     }
 
+    /**
+     * bot
+     * @param botId
+     */
     private void startMatching(Integer botId) {
         System.out.println("start matching!");
         MultiValueMap<String, String> data = new LinkedMultiValueMap<>();

@@ -4,8 +4,12 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.kob.backend.mapper.BotMapper;
+import com.kob.backend.mapper.GameBotMapper;
 import com.kob.backend.mapper.RecordMapper;
 import com.kob.backend.mapper.UserMapper;
+import com.kob.backend.pojo.Bot;
+import com.kob.backend.pojo.GameBot;
 import com.kob.backend.pojo.Record;
 import com.kob.backend.pojo.User;
 import com.kob.backend.service.record.GetRecordListService;
@@ -21,12 +25,17 @@ public class GetRecordListServiceImpl implements GetRecordListService {
     private RecordMapper recordMapper;
     @Autowired
     private UserMapper userMapper;
+    @Autowired
+    private GameBotMapper gameBotMapper;
+    @Autowired
+    private BotMapper botMapper;
+
 
     @Override
     public JSONObject getList(Integer page) {
         IPage<Record> recordIPage = new Page<>(page, 10);
         QueryWrapper<Record> queryWrapper = new QueryWrapper<>();
-        queryWrapper.orderByDesc("id");
+        queryWrapper.orderByDesc("createtime");
         List<Record> records = recordMapper.selectPage(recordIPage, queryWrapper).getRecords();
         JSONObject resp = new JSONObject();
         List<JSONObject> items = new LinkedList<>();
@@ -55,7 +64,7 @@ public class GetRecordListServiceImpl implements GetRecordListService {
     public JSONObject getUserList(Integer id) {
         QueryWrapper<Record> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("a_id",id).or().eq("b_id",id);
-        queryWrapper.orderByDesc("id");
+        queryWrapper.orderByDesc("createtime");
         List<Record> records = recordMapper.selectList(queryWrapper);
         JSONObject resp = new JSONObject();
         List<JSONObject> items = new LinkedList<>();
@@ -80,6 +89,27 @@ public class GetRecordListServiceImpl implements GetRecordListService {
                 else
                     result = "胜利";
             }
+            QueryWrapper<GameBot> qqqq = new QueryWrapper<>();
+            System.out.println("re = " + record.getId());
+            qqqq.eq("game_id",record.getId());
+            System.out.println("qqqq = " + qqqq);
+            GameBot gameBot = gameBotMapper.selectOne(qqqq);
+            String titleA = "手打", titleB = "手打";
+            if(gameBot!=null){
+                System.out.println("gameBot = " + gameBot);
+                Bot bot = botMapper.selectById(gameBot.getABotId());
+                if(bot!=null)
+                    titleA = bot.getTitle();
+                Bot bot1 = botMapper.selectById(gameBot.getBBotId());
+                if(bot1!=null)
+                    titleB = bot1.getTitle();
+                item.put("a_bot_title", titleA);
+                item.put("b_bot_title", titleB);
+            }else{
+                item.put("a_bot_title", titleA);
+                item.put("b_bot_title", titleB);
+            }
+
             item.put("result", result);
             item.put("record", record);
             items.add(item);

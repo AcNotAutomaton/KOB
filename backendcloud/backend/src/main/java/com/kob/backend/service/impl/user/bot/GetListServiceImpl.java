@@ -1,8 +1,10 @@
 package com.kob.backend.service.impl.user.bot;
 
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.kob.backend.mapper.BotMapper;
+import com.kob.backend.mapper.UserMapper;
 import com.kob.backend.pojo.Bot;
 import com.kob.backend.pojo.User;
 import com.kob.backend.service.impl.utils.UserDetailsImpl;
@@ -12,12 +14,16 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.LinkedList;
 import java.util.List;
 
 @Service
 public class GetListServiceImpl implements GetListService {
     @Autowired
     private BotMapper botMapper;
+
+    @Autowired
+    private UserMapper userMapper;
 
     @Override
     public List<Bot> getList() {
@@ -41,5 +47,29 @@ public class GetListServiceImpl implements GetListService {
             i.setContent("");
         }
         return bots;
+    }
+
+    @Override
+    public JSONObject getAllUserList() {
+
+        JSONObject jsonObject = new JSONObject();
+        QueryWrapper<Bot> q = new QueryWrapper<>();
+        q.orderByDesc("rating");
+        List<Bot> bots = botMapper.selectList(q);
+        System.out.println(bots);
+        List<JSONObject> items = new LinkedList<>();
+        for(Bot bot : bots){
+            JSONObject res = new JSONObject();
+            res.put("bot_title", bot.getTitle());
+            res.put("user_id", bot.getUserId());
+            res.put("bot_rating", bot.getRating());
+            res.put("user_photo",userMapper.selectById(bot.getUserId()).getPhoto() );
+//            res.put("game_time",)
+            //TODO 次数
+            res.put("user_name", userMapper.selectById(bot.getUserId()).getUsername());
+            items.add(res);
+        }
+        jsonObject.put("bot",items);
+        return jsonObject;
     }
 }

@@ -3,6 +3,7 @@ package com.kob.backend.consumer.utils;
 import com.alibaba.fastjson.JSONObject;
 import com.kob.backend.consumer.WebSocketServer;
 import com.kob.backend.pojo.Bot;
+import com.kob.backend.pojo.GameBot;
 import com.kob.backend.pojo.Record;
 import com.kob.backend.pojo.User;
 import org.springframework.util.LinkedMultiValueMap;
@@ -27,6 +28,7 @@ public class Game extends Thread {
     private String status = "playing";  // playing -> finished
     private String loser = "";  // all: 平局，A: A输，B: B输
     private final static String addBotUrl = "http://127.0.0.1:3002/bot/add/";
+
 
     public Game(
             Integer rows,
@@ -277,26 +279,49 @@ public class Game extends Thread {
         user.setRating(rating);
         user.setTimes(user.getTimes()+1);
         WebSocketServer.userMapper.updateById(user);
+        System.out.println("更新积分了");
+        System.out.println("playerA = " + playerA.getBotId());
+        System.out.println("playerB = " + playerB.getBotId());
+    }
+    //TODO bot增加积分和次数
+    private void updateBotRating(Integer botId, Integer score){
+        Bot bot = WebSocketServer.botMapper.selectById(botId);
+        if(bot!=null){
+            bot.setRating(bot.getRating() + score);
+            WebSocketServer.botMapper.updateById(bot);
+        }
     }
 
     private void saveToDatabase() {
-        Integer ratingA = WebSocketServer.userMapper.selectById(playerA.getId()).getRating();
-        Integer ratingB = WebSocketServer.userMapper.selectById(playerB.getId()).getRating();
+        User userA = WebSocketServer.userMapper.selectById(playerA.getId());
+        User userB = WebSocketServer.userMapper.selectById(playerB.getId());
+        Integer ratingA = userA.getRating();
+        Integer ratingB = userB.getRating();
         System.out.println("ratingB = " + ratingB);
         System.out.println("ratingA = " + ratingA);
         if ("A".equals(loser)) {
             ratingA -= 2;
             ratingB += 5;
+            updateBotRating(playerA.getBotId(), -5);
+            updateBotRating(playerB.getBotId(), 5);
         } else if ("B".equals(loser)) {
             ratingA += 5;
             ratingB -= 2;
+            updateBotRating(playerA.getBotId(), 5);
+            updateBotRating(playerB.getBotId(), -5);
         }
 
         updateUserRating(playerA, ratingA);
         updateUserRating(playerB, ratingB);
 
+        //TODO 随机数字当作id
+        int min = 100000;
+        int max = 500000;
+        Random random = new Random();
+        int randomNumber = random.nextInt(max - min) + min;
+
         Record record = new Record(
-                null,
+                randomNumber,
                 playerA.getId(),
                 playerA.getSx(),
                 playerA.getSy(),
@@ -310,6 +335,18 @@ public class Game extends Thread {
                 new Date()
         );
 
+
+            //TODO bot_id 也存数据库表 game_bot
+        GameBot gameBot = new GameBot(
+                null,
+                randomNumber,
+                playerA.getBotId(),
+                playerA.getId(),
+                playerB.getBotId(),
+                playerB.getId()
+        );
+
+        WebSocketServer.gameBotMapper.insert(gameBot);
         WebSocketServer.recordMapper.insert(record);
     }
 
