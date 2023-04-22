@@ -14,10 +14,11 @@
                         <span style="font-size: 130%">
                             {{ user.username }}
                             <div style="font-size: 18px;float:right;">
-                                <span @click="reflshAll" style="cursor: pointer;" class="badge rounded-pill text-bg-primary">
+                                <span @click="reflshAll" style="cursor: pointer;"
+                                    class="badge rounded-pill text-bg-primary">
                                     重新加载
                                 </span>
-                                <span  class="badge rounded-pill text-bg-info">
+                                <span class="badge rounded-pill text-bg-info">
                                     Bot名称
                                 </span>
                             </div>
@@ -50,9 +51,9 @@
                             <span class="badge text-bg-light">纯手玩</span>
                             <span class="badge text-bg-dark">纯手玩</span>
                         </div>
-                        <h4>Ta的战绩</h4> 
+                        <h4>Ta的战绩</h4>
                         <div class="ttt">
-                            <table  class="table table-striped table-hover " style="text-align: center;" > 
+                            <table class="table table-striped table-hover " style="text-align: center;">
                                 <thead>
                                     <tr>
                                         <th>A</th>
@@ -63,7 +64,7 @@
                                         <th>操作</th>
                                     </tr>
                                 </thead>
-                                <tbody >
+                                <tbody>
                                     <tr v-for="record in records" :key="record.record.id">
                                         <td>
                                             <!-- <img  :src="record.a_photo" alt="" class="record-user-photo"> -->
@@ -97,7 +98,7 @@
                                         </td>
                                         <td v-else>
                                             <span class="badge text-bg-secondary">
-                                            {{ record.result }}
+                                                {{ record.result }}
                                             </span>
                                         </td>
                                         <td>{{ record.record.createtime }}</td>
@@ -116,7 +117,6 @@
             </div>
         </div>
     </div>
-    
 </template>
 
 <script>
@@ -138,7 +138,7 @@ export default{
         let haveText = ref(true)
         const get_user_info = () => {
             $.ajax({
-                url: "http://127.0.0.1:3000/api/user/account/user/info/",
+                url: "http://8.130.99.166/api/user/account/user/info/",
                 type: "get",
                 data:{
                     id: user_id.value
@@ -155,7 +155,7 @@ export default{
 
         const refresh_bots = () => {
             $.ajax({
-                url: "http://127.0.0.1:3000/api/user/bot/getlist/user/",
+                url: "http://8.130.99.166/api/user/bot/getlist/user/",
                 type: "get",
                 data:{
                     user_id: user_id.value
@@ -174,7 +174,7 @@ export default{
 
         const get_list = ()=>{
             $.ajax({
-                url: "http://127.0.0.1:3000/api/record/getuesrlist/",
+                url: "http://8.130.99.166/api/record/getuesrlist/",
                 data: {
                     id: user_id.value
                 },
@@ -271,7 +271,8 @@ img.record-user-photo {
     width: 4vh;
     border-radius: 50%;
 }
-.ttt{
+
+.ttt {
     height: 500px;
     overflow: auto;
 }
