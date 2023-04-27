@@ -56,7 +56,7 @@ public class GetListServiceImpl implements GetListService {
         QueryWrapper<Bot> q = new QueryWrapper<>();
         q.orderByDesc("rating");
         List<Bot> bots = botMapper.selectList(q);
-        System.out.println(bots);
+//        System.out.println(bots);
         List<JSONObject> items = new LinkedList<>();
         for(Bot bot : bots){
             JSONObject res = new JSONObject();

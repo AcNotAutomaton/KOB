@@ -90,13 +90,13 @@ public class GetRecordListServiceImpl implements GetRecordListService {
                     result = "胜利";
             }
             QueryWrapper<GameBot> qqqq = new QueryWrapper<>();
-            System.out.println("re = " + record.getId());
+//            System.out.println("re = " + record.getId());
             qqqq.eq("game_id",record.getId());
-            System.out.println("qqqq = " + qqqq);
+//            System.out.println("qqqq = " + qqqq);
             GameBot gameBot = gameBotMapper.selectOne(qqqq);
             String titleA = "手打", titleB = "手打";
             if(gameBot!=null){
-                System.out.println("gameBot = " + gameBot);
+//                System.out.println("gameBot = " + gameBot);
                 Bot bot = botMapper.selectById(gameBot.getABotId());
                 if(bot!=null)
                     titleA = bot.getTitle();
