@@ -61,7 +61,6 @@ public class Consumer extends Thread {
         }
 
         Integer direction = botInterface.get();
-//        System.out.println("move-direction: " + bot.getUserId() + " " + direction);
 
         MultiValueMap<String, String> data = new LinkedMultiValueMap<>();
         data.add("user_id", bot.getUserId().toString());

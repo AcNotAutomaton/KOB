@@ -167,7 +167,6 @@ public class Game extends Thread {
 
     private void sendBotCode(Player player,String enemy) {
         if (player.getBotId().equals(-1)) return;  // 亲自出马，不需要执行代码
-//        System.out.println("执行代码了吗");
         MultiValueMap<String, String> data = new LinkedMultiValueMap<>();
         data.add("user_id", player.getId().toString());
         data.add("bot_code", player.getBotCode());
@@ -203,8 +202,6 @@ public class Game extends Thread {
                 e.printStackTrace();
             }
         }
-//        System.out.println("nextStepA = " + nextStepA);
-//        System.out.println("nextStepB = " + nextStepB);
         return false;
     }
 
@@ -279,9 +276,6 @@ public class Game extends Thread {
         user.setRating(rating);
         user.setTimes(user.getTimes()+1);
         WebSocketServer.userMapper.updateById(user);
-//        System.out.println("更新积分了");
-//        System.out.println("playerA = " + playerA.getBotId());
-//        System.out.println("playerB = " + playerB.getBotId());
     }
     //TODO bot增加积分和次数
     private void updateBotRating(Integer botId, Integer score){
@@ -297,8 +291,6 @@ public class Game extends Thread {
         User userB = WebSocketServer.userMapper.selectById(playerB.getId());
         Integer ratingA = userA.getRating();
         Integer ratingB = userB.getRating();
-//        System.out.println("ratingB = " + ratingB);
-//        System.out.println("ratingA = " + ratingA);
         if ("A".equals(loser)) {
             ratingA -= 2;
             ratingB += 5;
@@ -360,7 +352,6 @@ public class Game extends Thread {
 
     @Override
     public void run() {
-//        System.out.println(666666666);
         for (int i = 0; i < 1000; i ++ ) {
             if (nextStep()) {  // 是否获取了两条蛇的下一步操作
                 judge();

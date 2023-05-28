@@ -26,7 +26,6 @@ public class MatchingPool extends Thread {
     }
 
     public void addPlayer(Integer userId, Integer rating, Integer botId) {
-//        System.out.println("新的来了。。。。" + botId);
         if(botId>666){
             String id = String.valueOf(botId);
             String substring = id.substring(0, id.length() - 3);
@@ -43,7 +42,6 @@ public class MatchingPool extends Thread {
         try {
             for (Player player: players) {
                 if(player.getUserId().equals(userId)){
-//                    System.out.println("重复 踢出去");
                     removePlayer(userId);
                     break;
                 }
@@ -82,7 +80,6 @@ public class MatchingPool extends Thread {
     }
 
     private void sendResult(Player a, Player b) {  // 返回匹配结果
-//        System.out.println("send result: " + a + " " + b);
         MultiValueMap<String, String> data = new LinkedMultiValueMap<>();
         data.add("a_id", a.getUserId().toString());
         data.add("a_bot_id", a.getBotId().toString());
@@ -92,7 +89,6 @@ public class MatchingPool extends Thread {
     }
 
     private void matchPlayers() {  // 尝试匹配所有玩家
-//        System.out.println("match players: " + players.toString());不在输出所有正在匹配的玩家
         boolean[] used = new boolean[players.size()];
         for (int i = 0; i < players.size(); i ++ ) {
             if (used[i]) continue;

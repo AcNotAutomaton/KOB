@@ -65,28 +65,22 @@ public class WebSocketServer {
     @OnOpen
     public void onOpen(Session session, @PathParam("token") String token) throws IOException {
         this.session = session;
-//        System.out.println("connected!");
         Integer userId = JwtAuthentication.getUserId(token);
         this.user = userMapper.selectById(userId);
 
         if(users.contains(user)){
-//            System.out.println("已经存在一个了");
             onClose();
         }
-//        System.out.println("this.user = " + this.user);
 
         if (this.user != null) {
             users.put(userId, this);
         } else {
             this.session.close();
         }
-
-//        System.out.println(users);
     }
 
     @OnClose
     public void onClose() {
-//        System.out.println("disconnected!");
         if (this.user != null) {
             users.remove(this.user.getId());
         }
@@ -96,9 +90,6 @@ public class WebSocketServer {
     public static void startGame(Integer aId, Integer aBotId, Integer bId, Integer bBotId) {
         User a = userMapper.selectById(aId), b = userMapper.selectById(bId);
         Bot botA = botMapper.selectById(aBotId), botB = botMapper.selectById(bBotId);
-//        System.out.println("都过来了");
-//        System.out.println(a);
-//        System.out.println(b);
         Game game = new Game(
                 13,
                 14,
@@ -108,8 +99,6 @@ public class WebSocketServer {
                 b.getId(),
                 botB
         );
-//        System.out.println("botA = " + botA);
-//        System.out.println("botB = " + botB);
         game.createMap();
         if (users.get(a.getId()) != null)
             users.get(a.getId()).game = game;
@@ -152,7 +141,6 @@ public class WebSocketServer {
      * @param botId
      */
     private void startMatching(Integer botId) {
-//        System.out.println("start matching!");
         MultiValueMap<String, String> data = new LinkedMultiValueMap<>();
         data.add("user_id", this.user.getId().toString());
         data.add("rating", this.user.getRating().toString());
@@ -161,14 +149,12 @@ public class WebSocketServer {
     }
 
     private void stopMatching() {
-//        System.out.println("stop matching");
         MultiValueMap<String, String> data = new LinkedMultiValueMap<>();
         data.add("user_id", this.user.getId().toString());
         restTemplate.postForObject(removePlayerurl, data, String.class);
     }
 
     private void move(int direction) {
-//        System.out.println("move " + direction);
         if (game.getPlayerA().getId().equals(user.getId())) {
             if (game.getPlayerA().getBotId().equals(-1))  // 亲自出马
                 game.setNextStepA(direction);
@@ -180,10 +166,8 @@ public class WebSocketServer {
 
     @OnMessage
     public void onMessage(String message, Session session) {  // 当做路由
-//        System.out.println("receive message!");
         JSONObject data = JSONObject.parseObject(message);
         String event = data.getString("event");
-//        System.out.println(event);
         if ("start-matching".equals(event)) {
             startMatching(data.getInteger("bot_id"));
         } else if ("stop-matching".equals(event)) {
