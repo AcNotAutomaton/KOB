@@ -13,6 +13,7 @@
     "ace-builds": "^1.11.0",
     "bootstrap": "^5.2.1",
     "core-js": "^3.8.3",
+    "highlight.js": "^11.8.0",
     "jquery": "^3.6.1",
     "node-modules-regexp": "^1.0.0",
     "vue": "^3.2.13",
