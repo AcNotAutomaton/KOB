@@ -71,7 +71,7 @@ public class AddServiceImpl implements AddService {
         }
 
         Date now = new Date();
-        Bot bot = new Bot(null, user.getId(), title, description, content, 1500, now, now);
+        Bot bot = new Bot(null, user.getId(), title, description, content, 1500,0, now, now);
 
         botMapper.insert(bot);
         map.put("error_message", "success");

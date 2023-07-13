@@ -40,7 +40,7 @@
                                 <tr v-for="bot in bots" :key="bot.id">
                                     <td>{{ bot.title }}</td>
                                     <td>{{ bot.createtime }}</td>
-                                    <td>26</td>
+                                    <td>{{ bot.count }}</td>
                                     <td>{{ bot.rating}}</td>
 
                                 </tr>

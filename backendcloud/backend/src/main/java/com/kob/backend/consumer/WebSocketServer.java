@@ -86,7 +86,7 @@ public class WebSocketServer {
         }
     }
 
-    //TODO 这里有bot_id
+    // 这里有bot_id
     public static void startGame(Integer aId, Integer aBotId, Integer bId, Integer bBotId) {
         User a = userMapper.selectById(aId), b = userMapper.selectById(bId);
         Bot botA = botMapper.selectById(aBotId), botB = botMapper.selectById(bBotId);

@@ -12,9 +12,9 @@
             <tbody>
                 <tr v-for="user in bots" :key="user.id">
                     <td>
-                        <span class="record-user-username">{{ user.user_name }}</span>
+                        <span class="record-user-username">{{ user.bot_title }}</span>
                     </td>
-                    <td>55 </td>
+                    <td>{{ user.bot_count }}</td>
                     <td>{{ user.bot_rating }}</td>
                     <td>
                         <img @click="go_users(user.user_id)" :src="user.user_photo" alt="" class="record-user-photo">
