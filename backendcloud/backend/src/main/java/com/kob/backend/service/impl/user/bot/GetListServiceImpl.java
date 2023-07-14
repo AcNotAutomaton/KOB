@@ -63,8 +63,7 @@ public class GetListServiceImpl implements GetListService {
             res.put("user_id", bot.getUserId());
             res.put("bot_rating", bot.getRating());
             res.put("user_photo",userMapper.selectById(bot.getUserId()).getPhoto() );
-//            res.put("game_time",)
-            //TODO 次数
+            res.put("bot_count", bot.getCount());
             res.put("user_name", userMapper.selectById(bot.getUserId()).getUsername());
             items.add(res);
         }

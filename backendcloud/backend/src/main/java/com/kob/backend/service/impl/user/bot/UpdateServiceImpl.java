@@ -82,6 +82,7 @@ public class UpdateServiceImpl implements UpdateService {
                 description,
                 content,
                 bot.getRating(),
+                0,
                 bot.getCreatetime(),
                 new Date()
         );

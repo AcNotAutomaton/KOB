@@ -277,11 +277,12 @@ public class Game extends Thread {
         user.setTimes(user.getTimes()+1);
         WebSocketServer.userMapper.updateById(user);
     }
-    //TODO bot增加积分和次数
+    // bot增加积分和次数
     private void updateBotRating(Integer botId, Integer score){
         Bot bot = WebSocketServer.botMapper.selectById(botId);
         if(bot!=null){
             bot.setRating(bot.getRating() + score);
+            bot.setCount(bot.getCount() + 1);
             WebSocketServer.botMapper.updateById(bot);
         }
     }
@@ -306,7 +307,7 @@ public class Game extends Thread {
         updateUserRating(playerA, ratingA);
         updateUserRating(playerB, ratingB);
 
-        //TODO 随机数字当作id
+        // 随机数字当作id
         int min = 100000;
         int max = 500000;
         Random random = new Random();
@@ -328,7 +329,6 @@ public class Game extends Thread {
         );
 
 
-            //TODO bot_id 也存数据库表 game_bot
         GameBot gameBot = new GameBot(
                 null,
                 randomNumber,
