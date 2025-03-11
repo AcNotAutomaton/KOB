@@ -138,7 +138,7 @@ export default{
         let haveText = ref(true)
         const get_user_info = () => {
             $.ajax({
-                url: "http://8.130.99.166/api/user/account/user/info/",
+                url: "http://127.0.0.1:3000/api/user/account/user/info/",
                 type: "get",
                 data:{
                     id: user_id.value
@@ -155,7 +155,7 @@ export default{
 
         const refresh_bots = () => {
             $.ajax({
-                url: "http://8.130.99.166/api/user/bot/getlist/user/",
+                url: "http://127.0.0.1:3000/api/user/bot/getlist/user/",
                 type: "get",
                 data:{
                     user_id: user_id.value
@@ -174,7 +174,7 @@ export default{
 
         const get_list = ()=>{
             $.ajax({
-                url: "http://8.130.99.166/api/record/getuesrlist/",
+                url: "http://127.0.0.1:3000/api/record/getuesrlist/",
                 data: {
                     id: user_id.value
                 },
