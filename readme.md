@@ -1,6 +1,6 @@
 # King Of Bots简称KOB
 
-**演示地址**：http://47.120.10.114:8080/
+**演示地址**：http://localhost:8080/
 
 一个策略类AI的对战平台，平台上可以发布对战项目，每个同学可以实现自己的AI，然后支持AI与AI的PK与演示。
 项目成品参考[Botzone](https://www.botzone.org.cn/)———在线程序对战平台。
