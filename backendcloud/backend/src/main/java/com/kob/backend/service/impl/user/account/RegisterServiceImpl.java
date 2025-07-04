@@ -33,12 +33,12 @@ public class RegisterServiceImpl implements RegisterService {
         }
 
         username = username.trim();
-        if (username.length() == 0) {
+        if (username.isEmpty()) {
             map.put("error_message", "用户名不能为空");
             return map;
         }
 
-        if (password.length() == 0 || confirmedPassword.length() == 0) {
+        if (password.isEmpty() || confirmedPassword.isEmpty()) {
             map.put("error_message", "密码不能为空");
             return map;
         }
