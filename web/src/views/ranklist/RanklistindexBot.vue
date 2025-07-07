@@ -26,52 +26,36 @@
     </ContentField>
 </template>
 
-<script>
+<script setup>
 import ContentField from '../../components/ContentField.vue'
 import { useStore } from 'vuex';
 import router from "../../router/index"
 import $ from 'jquery';
 import { onMounted, ref } from 'vue';
 
-export default {
-    components: {
-        ContentField
-    },
-    setup() {
-        const store = useStore();
-        let bots = ref([])
-        const pull_bot =() => {
-            $.ajax({
-                url: "http://127.0.0.1:3000/api/user/bot/getlist/alluser/",
-                type: "get",
-                headers: {
-                    Authorization: "Bearer " + store.state.user.token,
-                },
-                success(resp) {
-                    bots.value = resp.bot
-                    console.log(bots.value)
-                },
-                error(resp) {
-                    console.log(resp);
-                }
-            })
+const store = useStore();
+let bots = ref([])
+
+const pull_bot = () => {
+    $.ajax({
+        url: "http://127.0.0.1:3000/api/user/bot/getlist/alluser/",
+        type: "get",
+        headers: {
+            Authorization: "Bearer " + store.state.user.token,
+        },
+        success(resp) {
+            bots.value = resp.bot
         }
-
-        onMounted(()=>{
-            pull_bot()
-        })
-
-        const go_users = id =>{
-            router.push(`/users/${id}/`)
-        }
-
-
-        return {
-            bots,
-            go_users
-        }
-    }
+    })
 }
+
+const go_users = id => {
+    router.push(`/users/${id}/`)
+}
+
+onMounted(() => {
+    pull_bot()
+})
 </script>
 
 <style scoped>

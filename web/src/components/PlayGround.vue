@@ -7,14 +7,10 @@
     </div>
 </template>
 
-<script>
+<script setup>
 import GameMap from './GameMap.vue'
 
-export default {
-    components: {
-        GameMap,
-    }
-}
+
 </script>
 
 <style scoped>

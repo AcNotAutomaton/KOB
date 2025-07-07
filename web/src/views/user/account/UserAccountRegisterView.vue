@@ -24,49 +24,34 @@
     </ContentField>
 </template>
 
-<script>
+<script setup>
 import ContentField from '../../../components/ContentField.vue'
 import { ref } from 'vue'
 import router from '../../../router/index'
 import $ from 'jquery'
 
-export default {
-    components: {
-        ContentField
-    },
-    setup() {
-        let username = ref('');
-        let password = ref('');
-        let confirmedPassword = ref('');
-        let error_message = ref('');
+let username = ref('');
+let password = ref('');
+let confirmedPassword = ref('');
+let error_message = ref('');
 
-        const register = () => {
-            $.ajax({
-                url: "http://127.0.0.1:3000/api/user/account/register/",
-                type: "post",
-                data: {
-                    username: username.value,
-                    password: password.value,
-                    confirmedPassword: confirmedPassword.value,
-                },
-                success(resp) {
-                    if (resp.error_message === "success") {
-                        router.push({ name: "user_account_login" });
-                    } else {
-                        error_message.value = resp.error_message;
-                    }
-                },
-            });
-        }
-
-        return {
-            username,
-            password,
-            confirmedPassword,
-            error_message,
-            register,
-        }
-    }
+const register = () => {
+    $.ajax({
+        url: "http://127.0.0.1:3000/api/user/account/register/",
+        type: "post",
+        data: {
+            username: username.value,
+            password: password.value,
+            confirmedPassword: confirmedPassword.value,
+        },
+        success(resp) {
+            if (resp.error_message === "success") {
+                router.push({ name: "user_account_login" });
+            } else {
+                error_message.value = resp.error_message;
+            }
+        },
+    });
 }
 </script>
 

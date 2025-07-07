@@ -14,13 +14,15 @@
             <tbody>
                 <tr v-for="record in records" :key="record.record.id">
                     <td>
-                        <img @click="go_users(record.record.aid)" :src="record.a_photo" alt="" class="record-user-photo">
+                        <img @click="go_users(record.record.aid)" :src="record.a_photo" alt=""
+                            class="record-user-photo">
                         &nbsp;
                         <span :class="[record.result === 'A胜' ? 'text-bg-primary' : 'text-bg-light', 'badge']"
                             class="record-user-username">{{ record.a_username }}</span>
                     </td>
                     <td>
-                        <img @click="go_users(record.record.bid)" :src="record.b_photo" alt="" class="record-user-photo">
+                        <img @click="go_users(record.record.bid)" :src="record.b_photo" alt=""
+                            class="record-user-photo">
                         &nbsp;
                         <span :class="[record.result === 'B胜' ? 'text-bg-primary' : 'text-bg-light', 'badge']"
                             class="record-user-username">{{ record.b_username }}</span>
@@ -52,129 +54,110 @@
     </ContentField>
 </template>
 
-<script>
+<script setup>
 import ContentField from '../../components/ContentField.vue'
 import { useStore } from 'vuex';
 import { ref } from 'vue';
 import $ from 'jquery';
 import router from '../../router/index'
 
-export default {
-    components: {
-        ContentField
-    },
-    setup() {
-        const store = useStore();
-        let records = ref([]);
-        let current_page = 1;
-        let total_records = 0;
-        let pages = ref([]);
+const store = useStore();
+let records = ref([]);
+let current_page = 1;
+let total_records = 0;
+let pages = ref([]);
 
-        const click_page = page => {
-            if (page === -2) page = current_page - 1;
-            else if (page === -1) page = current_page + 1;
-            let max_pages = parseInt(Math.ceil(total_records / 10));
+const click_page = page => {
+    if (page === -2) page = current_page - 1;
+    else if (page === -1) page = current_page + 1;
+    let max_pages = parseInt(Math.ceil(total_records / 10));
 
-            if (page >= 1 && page <= max_pages) {
-                pull_page(page);
-            }
+    if (page >= 1 && page <= max_pages) {
+        pull_page(page);
+    }
+}
+
+const udpate_pages = () => {
+    let max_pages = parseInt(Math.ceil(total_records / 10));
+    let new_pages = [];
+    for (let i = current_page - 2; i <= current_page + 2; i++) {
+        if (i >= 1 && i <= max_pages) {
+            new_pages.push({
+                number: i,
+                is_active: i === current_page ? "active" : "",
+            });
         }
+    }
+    pages.value = new_pages;
+}
 
-        const udpate_pages = () => {
-            let max_pages = parseInt(Math.ceil(total_records / 10));
-            let new_pages = [];
-            for (let i = current_page - 2; i <= current_page + 2; i++) {
-                if (i >= 1 && i <= max_pages) {
-                    new_pages.push({
-                        number: i,
-                        is_active: i === current_page ? "active" : "",
-                    });
-                }
-            }
-            pages.value = new_pages;
+const pull_page = page => {
+    current_page = page;
+    $.ajax({
+        url: "http://127.0.0.1:3000/api/record/getlist/",
+        data: {
+            page,
+        },
+        type: "get",
+        headers: {
+            Authorization: "Bearer " + store.state.user.token,
+        },
+        success(resp) {
+            records.value = resp.records;
+            total_records = resp.records_count;
+            udpate_pages();
         }
+    })
+}
 
-        const pull_page = page => {
-            current_page = page;
-            $.ajax({
-                url: "http://127.0.0.1:3000/api/record/getlist/",
-                data: {
-                    page,
-                },
-                type: "get",
-                headers: {
-                    Authorization: "Bearer " + store.state.user.token,
-                },
-                success(resp) {
-                    records.value = resp.records;
-                    total_records = resp.records_count;
-                    udpate_pages();
-                    console.log(records.value)
-                },
-                error(resp) {
-                    console.log(resp);
+const stringTo2D = map => {
+    let g = [];
+    for (let i = 0, k = 0; i < 13; i++) {
+        let line = [];
+        for (let j = 0; j < 14; j++, k++) {
+            if (map[k] === '0') line.push(0);
+            else line.push(1);
+        }
+        g.push(line);
+    }
+    return g;
+}
+
+const go_users = id => {
+    router.push(`/users/${id}/`)
+}
+
+const open_record_content = recordId => {
+    for (const record of records.value) {
+        if (record.record.id === recordId) {
+            store.commit("updateIsRecord", true);
+            store.commit("updateGame", {
+                map: stringTo2D(record.record.map),
+                a_id: record.record.aid,
+                a_sx: record.record.asx,
+                a_sy: record.record.asy,
+                b_id: record.record.bid,
+                b_sx: record.record.bsx,
+                b_sy: record.record.bsy,
+            });
+            store.commit("updateSteps", {
+                a_steps: record.record.asteps,
+                b_steps: record.record.bsteps,
+            });
+            store.commit("updateProgress", 0)
+            store.commit("updateRecordLoser", record.record.loser);
+            router.push({
+                name: "record_content",
+                params: {
+                    recordId
                 }
             })
-        }
-
-        pull_page(current_page);
-
-        const stringTo2D = map => {
-            let g = [];
-            for (let i = 0, k = 0; i < 13; i++) {
-                let line = [];
-                for (let j = 0; j < 14; j++, k++) {
-                    if (map[k] === '0') line.push(0);
-                    else line.push(1);
-                }
-                g.push(line);
-            }
-            return g;
-        }
-
-        const go_users = id =>{
-            router.push(`/users/${id}/`)
-        }
-
-        const open_record_content = recordId => {
-            for (const record of records.value) {
-                if (record.record.id === recordId) {
-                    store.commit("updateIsRecord", true);
-                    store.commit("updateGame", {
-                        map: stringTo2D(record.record.map),
-                        a_id: record.record.aid,
-                        a_sx: record.record.asx,
-                        a_sy: record.record.asy,
-                        b_id: record.record.bid,
-                        b_sx: record.record.bsx,
-                        b_sy: record.record.bsy,
-                    });
-                    store.commit("updateSteps", {
-                        a_steps: record.record.asteps,
-                        b_steps: record.record.bsteps,
-                    });
-                    store.commit("updateProgress", 0)
-                    store.commit("updateRecordLoser", record.record.loser);
-                    router.push({
-                        name: "record_content",
-                        params: {
-                            recordId
-                        }
-                    })
-                    break;
-                }
-            }
-        }
-
-        return {
-            records,
-            open_record_content,
-            pages,
-            click_page,
-            go_users
+            break;
         }
     }
 }
+
+pull_page(current_page);
 </script>
 
 <style scoped>

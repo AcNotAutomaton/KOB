@@ -119,151 +119,126 @@
     </div>
 </template>
 
-<script>
+<script setup>
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router';
 import $ from 'jquery'
 import { useStore } from 'vuex'
 import router from '../../../router/index'
 
+const route = useRoute()
+const store = useStore()
+let bots = ref([])
+let user_id = ref(0)
+let user = ref({})
+let records = ref([])
+let haveText = ref(true)
 
-export default{
-    setup(){
-        const route = useRoute()
-        const store = useStore()
-        let bots = ref([])
-        let user_id = ref(0)
-        let user = ref({})
-        let records = ref([])
-        let haveText = ref(true)
-        const get_user_info = () => {
-            $.ajax({
-                url: "http://127.0.0.1:3000/api/user/account/user/info/",
-                type: "get",
-                data:{
-                    id: user_id.value
-                },
-                headers: {
-                    Authorization: "Bearer " + store.state.user.token,
-                },
-                success(resp) {
-                    user.value = resp
-                    console.log(user.value)
-                }
-            })
+const get_user_info = () => {
+    $.ajax({
+        url: "http://127.0.0.1:3000/api/user/account/user/info/",
+        type: "get",
+        data:{
+            id: user_id.value
+        },
+        headers: {
+            Authorization: "Bearer " + store.state.user.token,
+        },
+        success(resp) {
+            user.value = resp
         }
-
-        const refresh_bots = () => {
-            $.ajax({
-                url: "http://127.0.0.1:3000/api/user/bot/getlist/user/",
-                type: "get",
-                data:{
-                    user_id: user_id.value
-                },
-                headers: {
-                    Authorization: "Bearer " + store.state.user.token,
-                },
-                success(resp) {
-                    bots.value = resp;
-                    if(bots.value.length===0)haveText.value = false
-                    else haveText.value = true
-                    console.log(resp)
-                }
-            })
-        }
-
-        const get_list = ()=>{
-            $.ajax({
-                url: "http://127.0.0.1:3000/api/record/getuesrlist/",
-                data: {
-                    id: user_id.value
-                },
-                type: "get",
-                headers: {
-                    Authorization: "Bearer " + store.state.user.token,
-                },
-                success(resp) {
-                    records.value = resp.records;
-                    console.log(resp)
-                },
-                error(resp) {
-                    console.log(resp);
-                }
-            })
-        }
-
-        const stringTo2D = map => {
-            let g = [];
-            for (let i = 0, k = 0; i < 13; i++) {
-                let line = [];
-                for (let j = 0; j < 14; j++, k++) {
-                    if (map[k] === '0') line.push(0);
-                    else line.push(1);
-                }
-                g.push(line);
-            }
-            return g;
-        }
-
-        const open_record_content = recordId => {
-            for (const record of records.value) {
-                if (record.record.id === recordId) {
-                    store.commit("updateIsRecord", true);
-                    store.commit("updateGame", {
-                        map: stringTo2D(record.record.map),
-                        a_id: record.record.aid,
-                        a_sx: record.record.asx,
-                        a_sy: record.record.asy,
-                        b_id: record.record.bid,
-                        b_sx: record.record.bsx,
-                        b_sy: record.record.bsy,
-                    });
-                    store.commit("updateSteps", {
-                        a_steps: record.record.asteps,
-                        b_steps: record.record.bsteps,
-                    });
-                    store.commit("updateProgress", 0)
-                    store.commit("updateRecordLoser", record.record.loser);
-                    router.push({
-                        name: "record_content",
-                        params: {
-                            recordId
-                        }
-                    })
-                    break;
-                }
-            }
-        }
-
-        const reflshAll = ()=>{
-            get_user_info()
-            refresh_bots()
-            get_list()
-        }
-
-        onMounted(()=>{
-
-            user_id.value = route.params.id
-            console.log(user_id.value)
-            get_user_info()
-            refresh_bots()
-            get_list()
-        })
-
-        refresh_bots();
-
-        return{
-            user,
-            bots,
-            haveText,
-            records,
-            reflshAll,
-            open_record_content
-        }
+    })
 }
 
-
+const refresh_bots = () => {
+    $.ajax({
+        url: "http://127.0.0.1:3000/api/user/bot/getlist/user/",
+        type: "get",
+        data:{
+            user_id: user_id.value
+        },
+        headers: {
+            Authorization: "Bearer " + store.state.user.token,
+        },
+        success(resp) {
+            bots.value = resp;
+            if(bots.value.length===0)haveText.value = false
+            else haveText.value = true
+        }
+    })
 }
+
+const get_list = ()=>{
+    $.ajax({
+        url: "http://127.0.0.1:3000/api/record/getuesrlist/",
+        data: {
+            id: user_id.value
+        },
+        type: "get",
+        headers: {
+            Authorization: "Bearer " + store.state.user.token,
+        },
+        success(resp) {
+            records.value = resp.records;
+        }
+    })
+}
+
+const stringTo2D = map => {
+    let g = [];
+    for (let i = 0, k = 0; i < 13; i++) {
+        let line = [];
+        for (let j = 0; j < 14; j++, k++) {
+            if (map[k] === '0') line.push(0);
+            else line.push(1);
+        }
+        g.push(line);
+    }
+    return g;
+}
+
+const open_record_content = recordId => {
+    for (const record of records.value) {
+        if (record.record.id === recordId) {
+            store.commit("updateIsRecord", true);
+            store.commit("updateGame", {
+                map: stringTo2D(record.record.map),
+                a_id: record.record.aid,
+                a_sx: record.record.asx,
+                a_sy: record.record.asy,
+                b_id: record.record.bid,
+                b_sx: record.record.bsx,
+                b_sy: record.record.bsy,
+            });
+            store.commit("updateSteps", {
+                a_steps: record.record.asteps,
+                b_steps: record.record.bsteps,
+            });
+            store.commit("updateProgress", 0)
+            store.commit("updateRecordLoser", record.record.loser);
+            router.push({
+                name: "record_content",
+                params: {
+                    recordId
+                }
+            })
+            break;
+        }
+    }
+}
+
+const reflshAll = () =>{
+    refresh_bots()
+    get_list()
+    get_user_info()
+}
+
+onMounted(() => {
+    user_id.value = route.params.id
+    get_user_info()
+    refresh_bots()
+    get_list()
+})
 </script>
 
 <style scoped>

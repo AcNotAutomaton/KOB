@@ -20,63 +20,49 @@
     </ContentField>
 </template>
 
-<script>
+<script setup>
 import ContentField from '../../../components/ContentField.vue'
 import { useStore } from 'vuex'
 import { ref } from 'vue'
 import router from '../../../router/index'
 
-export default {
-    components: {
-        ContentField
-    },
-    setup() {
-        const store = useStore();
-        let username = ref('');
-        let password = ref('');
-        let error_message = ref('');
+const store = useStore()
+const username = ref('')
+const password = ref('')
+const error_message = ref('')
 
-        const jwt_token = localStorage.getItem("jwt_token");
-        if (jwt_token) {
-            store.commit("updateToken", jwt_token);
+const jwt_token = localStorage.getItem("jwt_token")
+if (jwt_token) {
+    store.commit("updateToken", jwt_token)
+    store.dispatch("getinfo", {
+        success() {
+            router.push({ name: "home_index" })
+            store.commit("updatePullingInfo", false)
+        },
+        error() {
+            store.commit("updatePullingInfo", false)
+        }
+    })
+} else {
+    store.commit("updatePullingInfo", false)
+}
+
+const login = () => {
+    error_message.value = ""
+    store.dispatch("login", {
+        username: username.value,
+        password: password.value,
+        success() {
             store.dispatch("getinfo", {
                 success() {
-                    router.push({ name: "home_index" });
-                    store.commit("updatePullingInfo", false);
-                },
-                error() {
-                    store.commit("updatePullingInfo", false);
+                    router.push({ name: 'home_index' })
                 }
             })
-        } else {
-            store.commit("updatePullingInfo", false);
+        },
+        error() {
+            error_message.value = "用户名或密码错误"
         }
-
-        const login = () => {
-            error_message.value = "";
-            store.dispatch("login", {
-                username: username.value,
-                password: password.value,
-                success() {
-                    store.dispatch("getinfo", {
-                        success() {
-                            router.push({ name: 'home_index' });
-                        }
-                    })
-                },
-                error() {
-                    error_message.value = "用户名或密码错误";
-                }
-            })
-        }
-
-        return {
-            username,
-            password,
-            error_message,
-            login,
-        }
-    }
+    })
 }
 </script>
 
