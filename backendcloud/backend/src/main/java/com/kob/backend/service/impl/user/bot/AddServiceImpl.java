@@ -34,7 +34,7 @@ public class AddServiceImpl implements AddService {
 
         Map<String, String> map = new HashMap<>();
 
-        if (title == null || title.length() == 0) {
+        if (title == null || title.isEmpty()) {
             map.put("error_message", "标题不能为空");
             return map;
         }
@@ -44,7 +44,7 @@ public class AddServiceImpl implements AddService {
             return map;
         }
 
-        if (description == null || description.length() == 0) {
+        if (description == null || description.isEmpty()) {
             description = "这个用户很懒，什么也没留下~";
         }
 
@@ -53,7 +53,7 @@ public class AddServiceImpl implements AddService {
             return map;
         }
 
-        if (content == null || content.length() == 0) {
+        if (content == null || content.isEmpty()) {
             map.put("error_message", "代码不能为空");
             return map;
         }

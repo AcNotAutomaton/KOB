@@ -5,7 +5,7 @@ import io.jsonwebtoken.Claims;
 
 public class JwtAuthentication {
     public static Integer getUserId(String token) {
-        int userId = -1;
+        int userId;
         try {
             Claims claims = JwtUtil.parseJWT(token);
             userId = Integer.parseInt(claims.getSubject());

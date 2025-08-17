@@ -9,7 +9,6 @@ import com.kob.backend.mapper.RecordMapper;
 import com.kob.backend.mapper.UserMapper;
 import com.kob.backend.pojo.Bot;
 import com.kob.backend.pojo.User;
-import com.sun.org.apache.xpath.internal.operations.Mult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
@@ -20,90 +19,32 @@ import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArraySet;
 
 @Component
 @ServerEndpoint("/websocket/{token}")  // 注意不要以'/'结尾
 public class WebSocketServer {
 
     final public static ConcurrentHashMap<Integer, WebSocketServer> users = new ConcurrentHashMap<>();
-    private User user;
-    private Session session = null;
-
+    private final static String addPlayerUrl = "http://127.0.0.1:3001/player/add/";
+    private final static String removePlayerurl = "http://127.0.0.1:3001/player/remove/";
     public static UserMapper userMapper;
     public static RecordMapper recordMapper;
     public static BotMapper botMapper;
     public static GameBotMapper gameBotMapper;
     public static RestTemplate restTemplate;
     public Game game = null;
-    private final static String addPlayerUrl = "http://127.0.0.1:3001/player/add/";
-    private final static String removePlayerurl = "http://127.0.0.1:3001/player/remove/";
-
-    @Autowired
-    public void setUserMapper(UserMapper userMapper) {
-        WebSocketServer.userMapper = userMapper;
-    }
-    @Autowired
-    public void setRecordMapper(RecordMapper recordMapper) {
-        WebSocketServer.recordMapper = recordMapper;
-    }
-    @Autowired
-    public void setGameBotMapper(GameBotMapper gameBotMapper) {
-        WebSocketServer.gameBotMapper = gameBotMapper;
-    }
-    @Autowired
-    public void setBotMapper(BotMapper botMapper) {
-        WebSocketServer.botMapper = botMapper;
-    }
-    @Autowired
-    public void setRestTemplate(RestTemplate restTemplate) {
-        WebSocketServer.restTemplate = restTemplate;
-    }
-
-    @OnOpen
-    public void onOpen(Session session, @PathParam("token") String token) throws IOException {
-        this.session = session;
-        Integer userId = JwtAuthentication.getUserId(token);
-        this.user = userMapper.selectById(userId);
-
-        if(users.contains(user)){
-            onClose();
-        }
-
-        if (this.user != null) {
-            users.put(userId, this);
-        } else {
-            this.session.close();
-        }
-    }
-
-    @OnClose
-    public void onClose() {
-        if (this.user != null) {
-            users.remove(this.user.getId());
-        }
-    }
+    private User user;
+    private Session session = null;
 
     // 这里有bot_id
     public static void startGame(Integer aId, Integer aBotId, Integer bId, Integer bBotId) {
         User a = userMapper.selectById(aId), b = userMapper.selectById(bId);
         Bot botA = botMapper.selectById(aBotId), botB = botMapper.selectById(bBotId);
-        Game game = new Game(
-                13,
-                14,
-                20,
-                a.getId(),
-                botA,
-                b.getId(),
-                botB
-        );
+        Game game = new Game(13, 14, 20, a.getId(), botA, b.getId(), botB);
         game.createMap();
-        if (users.get(a.getId()) != null)
-            users.get(a.getId()).game = game;
-        if (users.get(b.getId()) != null)
-            users.get(b.getId()).game = game;
+        if (users.get(a.getId()) != null) users.get(a.getId()).game = game;
+        if (users.get(b.getId()) != null) users.get(b.getId()).game = game;
 
         game.start();
 
@@ -121,23 +62,71 @@ public class WebSocketServer {
         respA.put("opponent_username", b.getUsername());
         respA.put("opponent_photo", b.getPhoto());
         respA.put("game", respGame);
-        if (users.get(a.getId()) != null)
-            users.get(a.getId()).sendMessage(respA.toJSONString());
+        if (users.get(a.getId()) != null) users.get(a.getId()).sendMessage(respA.toJSONString());
 
         JSONObject respB = new JSONObject();
         respB.put("event", "start-matching");
         respB.put("opponent_username", a.getUsername());
         respB.put("opponent_photo", a.getPhoto());
         respB.put("game", respGame);
-        if (users.get(b.getId()) != null)
-            users.get(b.getId()).sendMessage(respB.toJSONString());
-        else{
+        if (users.get(b.getId()) != null) users.get(b.getId()).sendMessage(respB.toJSONString());
+        else {
 //            System.out.println("66666");
+        }
+    }
+
+    @Autowired
+    public void setUserMapper(UserMapper userMapper) {
+        WebSocketServer.userMapper = userMapper;
+    }
+
+    @Autowired
+    public void setRecordMapper(RecordMapper recordMapper) {
+        WebSocketServer.recordMapper = recordMapper;
+    }
+
+    @Autowired
+    public void setGameBotMapper(GameBotMapper gameBotMapper) {
+        WebSocketServer.gameBotMapper = gameBotMapper;
+    }
+
+    @Autowired
+    public void setBotMapper(BotMapper botMapper) {
+        WebSocketServer.botMapper = botMapper;
+    }
+
+    @Autowired
+    public void setRestTemplate(RestTemplate restTemplate) {
+        WebSocketServer.restTemplate = restTemplate;
+    }
+
+    @OnOpen
+    public void onOpen(Session session, @PathParam("token") String token) throws IOException {
+        this.session = session;
+        Integer userId = JwtAuthentication.getUserId(token);
+        this.user = userMapper.selectById(userId);
+
+        if (users.contains(user)) {
+            onClose();
+        }
+
+        if (this.user != null) {
+            users.put(userId, this);
+        } else {
+            this.session.close();
+        }
+    }
+
+    @OnClose
+    public void onClose() {
+        if (this.user != null) {
+            users.remove(this.user.getId());
         }
     }
 
     /**
      * bot
+     *
      * @param botId
      */
     private void startMatching(Integer botId) {
