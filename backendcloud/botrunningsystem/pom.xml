@@ -56,10 +56,11 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- 更新joor依赖到最新版本，兼容Java 17 -->
         <dependency>
             <groupId>org.jooq</groupId>
-            <artifactId>joor-java-8</artifactId>
-            <version>0.9.14</version>
+            <artifactId>joor</artifactId>
+            <version>0.9.15</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->
