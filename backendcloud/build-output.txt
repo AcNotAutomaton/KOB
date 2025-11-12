@@ -1,0 +1,117 @@
+[INFO] Scanning for projects...
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Build Order:
+[INFO] 
+[INFO] backend                                                            [jar]
+[INFO] backendcloud                                                       [pom]
+[INFO] matchingsystem                                                     [jar]
+[INFO] BotRunningSystem                                                   [jar]
+[INFO] 
+[INFO] --------------------------< com.kob:backend >---------------------------
+[INFO] Building backend 0.0.1-SNAPSHOT                                    [1/4]
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:resources (default-resources) @ backend ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.11.0:compile (default-compile) @ backend ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:testResources (default-testResources) @ backend ---
+[INFO] skip non existing resourceDirectory F:\Java\kob\backendcloud\backend\src\test\resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.11.0:testCompile (default-testCompile) @ backend ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- maven-surefire-plugin:3.0.0:test (default-test) @ backend ---
+[INFO] Tests are skipped.
+[INFO] 
+[INFO] --- maven-jar-plugin:3.3.0:jar (default-jar) @ backend ---
+[INFO] 
+[INFO] --- spring-boot-maven-plugin:3.1.6:repackage (repackage) @ backend ---
+[INFO] Replacing main artifact F:\Java\kob\backendcloud\backend\target\backend-0.0.1-SNAPSHOT.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to F:\Java\kob\backendcloud\backend\target\backend-0.0.1-SNAPSHOT.jar.original
+[INFO] 
+[INFO] --- spring-boot-maven-plugin:3.1.6:repackage (default) @ backend ---
+[INFO] Replacing main artifact F:\Java\kob\backendcloud\backend\target\backend-0.0.1-SNAPSHOT.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to F:\Java\kob\backendcloud\backend\target\backend-0.0.1-SNAPSHOT.jar.original
+[INFO] 
+[INFO] --------------------------< com:backendcloud >--------------------------
+[INFO] Building backendcloud 0.0.1-SNAPSHOT                               [2/4]
+[INFO] --------------------------------[ pom ]---------------------------------
+[INFO] 
+[INFO] --- spring-boot-maven-plugin:3.1.6:repackage (repackage) @ backendcloud ---
+[INFO] 
+[INFO] ---------------< com.kob.matchingsystem:matchingsystem >----------------
+[INFO] Building matchingsystem 0.0.1-SNAPSHOT                             [3/4]
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:resources (default-resources) @ matchingsystem ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.11.0:compile (default-compile) @ matchingsystem ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:testResources (default-testResources) @ matchingsystem ---
+[INFO] skip non existing resourceDirectory F:\Java\kob\backendcloud\matchingsystem\src\test\resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.11.0:testCompile (default-testCompile) @ matchingsystem ---
+[INFO] No sources to compile
+[INFO] 
+[INFO] --- maven-surefire-plugin:3.0.0:test (default-test) @ matchingsystem ---
+[INFO] Tests are skipped.
+[INFO] 
+[INFO] --- maven-jar-plugin:3.3.0:jar (default-jar) @ matchingsystem ---
+[INFO] 
+[INFO] --- spring-boot-maven-plugin:3.1.6:repackage (repackage) @ matchingsystem ---
+[INFO] Replacing main artifact F:\Java\kob\backendcloud\matchingsystem\target\matchingsystem-0.0.1-SNAPSHOT.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to F:\Java\kob\backendcloud\matchingsystem\target\matchingsystem-0.0.1-SNAPSHOT.jar.original
+[INFO] 
+[INFO] --- spring-boot-maven-plugin:3.1.6:repackage (default) @ matchingsystem ---
+[INFO] Replacing main artifact F:\Java\kob\backendcloud\matchingsystem\target\matchingsystem-0.0.1-SNAPSHOT.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to F:\Java\kob\backendcloud\matchingsystem\target\matchingsystem-0.0.1-SNAPSHOT.jar.original
+[INFO] 
+[INFO] -------------< com.kob.BotRunningSystem:BotRunningSystem >--------------
+[INFO] Building BotRunningSystem 0.0.1-SNAPSHOT                           [4/4]
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:resources (default-resources) @ BotRunningSystem ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.11.0:compile (default-compile) @ BotRunningSystem ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:testResources (default-testResources) @ BotRunningSystem ---
+[INFO] skip non existing resourceDirectory F:\Java\kob\backendcloud\botrunningsystem\src\test\resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.11.0:testCompile (default-testCompile) @ BotRunningSystem ---
+[INFO] No sources to compile
+[INFO] 
+[INFO] --- maven-surefire-plugin:3.0.0:test (default-test) @ BotRunningSystem ---
+[INFO] Tests are skipped.
+[INFO] 
+[INFO] --- maven-jar-plugin:3.3.0:jar (default-jar) @ BotRunningSystem ---
+[INFO] 
+[INFO] --- spring-boot-maven-plugin:3.1.6:repackage (repackage) @ BotRunningSystem ---
+[INFO] Replacing main artifact F:\Java\kob\backendcloud\botrunningsystem\target\BotRunningSystem-0.0.1-SNAPSHOT.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to F:\Java\kob\backendcloud\botrunningsystem\target\BotRunningSystem-0.0.1-SNAPSHOT.jar.original
+[INFO] 
+[INFO] --- spring-boot-maven-plugin:3.1.6:repackage (default) @ BotRunningSystem ---
+[INFO] Replacing main artifact F:\Java\kob\backendcloud\botrunningsystem\target\BotRunningSystem-0.0.1-SNAPSHOT.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to F:\Java\kob\backendcloud\botrunningsystem\target\BotRunningSystem-0.0.1-SNAPSHOT.jar.original
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary for backendcloud 0.0.1-SNAPSHOT:
+[INFO] 
+[INFO] backend ............................................ SUCCESS [  1.307 s]
+[INFO] backendcloud ....................................... SUCCESS [  0.025 s]
+[INFO] matchingsystem ..................................... SUCCESS [  0.149 s]
+[INFO] BotRunningSystem ................................... SUCCESS [  0.089 s]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  1.783 s
+[INFO] Finished at: 2025-11-12T22:05:15+08:00
+[INFO] ------------------------------------------------------------------------

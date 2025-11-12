@@ -3,11 +3,11 @@ package com.kob.backend.utils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Date;
 import java.util.UUID;
@@ -22,36 +22,41 @@ public class JwtUtil {
     }
 
     public static String createJWT(String subject) {
-        JwtBuilder builder = getJwtBuilder(subject, null, getUUID());
+        JwtBuilder builder = getJwtBuilder(subject, getUUID());
         return builder.compact();
     }
 
-    private static JwtBuilder getJwtBuilder(String subject, Long ttlMillis, String uuid) {
-        SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256;
+    private static JwtBuilder getJwtBuilder(String subject, String uuid) {
         SecretKey secretKey = generalKey();
         long nowMillis = System.currentTimeMillis();
         Date now = new Date(nowMillis);
-        if (ttlMillis == null) {
-            ttlMillis = JwtUtil.JWT_TTL;
-        }
-
-        long expMillis = nowMillis + ttlMillis;
+        long expMillis = nowMillis + JwtUtil.JWT_TTL;
         Date expDate = new Date(expMillis);
         return Jwts.builder()
                 .setId(uuid)
                 .setSubject(subject)
                 .setIssuer("sg")
                 .setIssuedAt(now)
-                .signWith(signatureAlgorithm, secretKey)
+                .signWith(secretKey) // use non-deprecated API
                 .setExpiration(expDate);
     }
 
     public static SecretKey generalKey() {
-        byte[] encodeKey = Base64.getDecoder().decode(JwtUtil.JWT_KEY);
-        return new SecretKeySpec(encodeKey, 0, encodeKey.length, "HmacSHA256");
+        // Try to interpret JWT_KEY as Base64-encoded key first. If it's not Base64, fall back to raw UTF-8 bytes.
+        try {
+            byte[] decoded = Base64.getDecoder().decode(JWT_KEY);
+            // If decode produced some bytes, use them as HMAC key
+            if (decoded != null && decoded.length > 0) {
+                return Keys.hmacShaKeyFor(decoded);
+            }
+        } catch (IllegalArgumentException ignored) {
+            // Not valid Base64, fall back below
+        }
+        byte[] keyBytes = JWT_KEY.getBytes(StandardCharsets.UTF_8);
+        return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public static Claims parseJWT(String jwt) throws Exception {
+    public static Claims parseJWT(String jwt) {
         SecretKey secretKey = generalKey();
         return Jwts.parserBuilder()
                 .setSigningKey(secretKey)
