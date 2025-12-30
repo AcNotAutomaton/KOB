@@ -19,9 +19,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArraySet;
 
 @Component
 @ServerEndpoint("/websocket/{token}")  // 注意不要以'/'结尾
@@ -44,18 +42,22 @@ public class WebSocketServer {
     public void setUserMapper(UserMapper userMapper) {
         WebSocketServer.userMapper = userMapper;
     }
+
     @Autowired
     public void setRecordMapper(RecordMapper recordMapper) {
         WebSocketServer.recordMapper = recordMapper;
     }
+
     @Autowired
     public void setGameBotMapper(GameBotMapper gameBotMapper) {
         WebSocketServer.gameBotMapper = gameBotMapper;
     }
+
     @Autowired
     public void setBotMapper(BotMapper botMapper) {
         WebSocketServer.botMapper = botMapper;
     }
+
     @Autowired
     public void setRestTemplate(RestTemplate restTemplate) {
         WebSocketServer.restTemplate = restTemplate;
@@ -67,7 +69,7 @@ public class WebSocketServer {
         Integer userId = JwtAuthentication.getUserId(token);
         this.user = userMapper.selectById(userId);
 
-        if(users.contains(user)){
+        if (users.contains(user)) {
             onClose();
         }
 
@@ -89,20 +91,10 @@ public class WebSocketServer {
     public static void startGame(Integer aId, Integer aBotId, Integer bId, Integer bBotId) {
         User a = userMapper.selectById(aId), b = userMapper.selectById(bId);
         Bot botA = botMapper.selectById(aBotId), botB = botMapper.selectById(bBotId);
-        Game game = new Game(
-                13,
-                14,
-                20,
-                a.getId(),
-                botA,
-                b.getId(),
-                botB
-        );
+        Game game = new Game(13, 14, 20, a.getId(), botA, b.getId(), botB);
         game.createMap();
-        if (users.get(a.getId()) != null)
-            users.get(a.getId()).game = game;
-        if (users.get(b.getId()) != null)
-            users.get(b.getId()).game = game;
+        if (users.get(a.getId()) != null) users.get(a.getId()).game = game;
+        if (users.get(b.getId()) != null) users.get(b.getId()).game = game;
 
         game.start();
 
@@ -120,23 +112,23 @@ public class WebSocketServer {
         respA.put("opponent_username", b.getUsername());
         respA.put("opponent_photo", b.getPhoto());
         respA.put("game", respGame);
-        if (users.get(a.getId()) != null)
-            users.get(a.getId()).sendMessage(respA.toJSONString());
+        if (users.get(a.getId()) != null) users.get(a.getId()).sendMessage(respA.toJSONString());
 
         JSONObject respB = new JSONObject();
         respB.put("event", "start-matching");
         respB.put("opponent_username", a.getUsername());
         respB.put("opponent_photo", a.getPhoto());
         respB.put("game", respGame);
-        if (users.get(b.getId()) != null)
+        if (users.get(b.getId()) != null) {
             users.get(b.getId()).sendMessage(respB.toJSONString());
-        else{
+        } else {
 //            System.out.println("66666");
         }
     }
 
     /**
      * bot
+     *
      * @param botId
      */
     private void startMatching(Integer botId) {
