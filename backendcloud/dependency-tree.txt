@@ -1,2 +1,0 @@
-com:backendcloud:pom:0.0.1-SNAPSHOT
-\- org.springframework.cloud:spring-cloud-dependencies:pom:2022.0.1:compile
