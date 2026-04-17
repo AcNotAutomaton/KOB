@@ -9,15 +9,15 @@ import com.kob.backend.mapper.RecordMapper;
 import com.kob.backend.mapper.UserMapper;
 import com.kob.backend.pojo.Bot;
 import com.kob.backend.pojo.User;
+import jakarta.websocket.*;
+import jakarta.websocket.server.PathParam;
+import jakarta.websocket.server.ServerEndpoint;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
-import javax.websocket.*;
-import javax.websocket.server.PathParam;
-import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -34,8 +34,57 @@ public class WebSocketServer {
     public static GameBotMapper gameBotMapper;
     public static RestTemplate restTemplate;
     public Game game = null;
-    private User user;
-    private Session session = null;
+    private final static String addPlayerUrl = "http://127.0.0.1:3001/player/add/";
+    private final static String removePlayerurl = "http://127.0.0.1:3001/player/remove/";
+
+    @Autowired
+    public void setUserMapper(UserMapper userMapper) {
+        WebSocketServer.userMapper = userMapper;
+    }
+
+    @Autowired
+    public void setRecordMapper(RecordMapper recordMapper) {
+        WebSocketServer.recordMapper = recordMapper;
+    }
+
+    @Autowired
+    public void setGameBotMapper(GameBotMapper gameBotMapper) {
+        WebSocketServer.gameBotMapper = gameBotMapper;
+    }
+
+    @Autowired
+    public void setBotMapper(BotMapper botMapper) {
+        WebSocketServer.botMapper = botMapper;
+    }
+
+    @Autowired
+    public void setRestTemplate(RestTemplate restTemplate) {
+        WebSocketServer.restTemplate = restTemplate;
+    }
+
+    @OnOpen
+    public void onOpen(Session session, @PathParam("token") String token) throws IOException {
+        this.session = session;
+        Integer userId = JwtAuthentication.getUserId(token);
+        this.user = userMapper.selectById(userId);
+
+        if (users.contains(user)) {
+            onClose();
+        }
+
+        if (this.user != null) {
+            users.put(userId, this);
+        } else {
+            this.session.close();
+        }
+    }
+
+    @OnClose
+    public void onClose() {
+        if (this.user != null) {
+            users.remove(this.user.getId());
+        }
+    }
 
     // 这里有bot_id
     public static void startGame(Integer aId, Integer aBotId, Integer bId, Integer bBotId) {
@@ -69,8 +118,9 @@ public class WebSocketServer {
         respB.put("opponent_username", a.getUsername());
         respB.put("opponent_photo", a.getPhoto());
         respB.put("game", respGame);
-        if (users.get(b.getId()) != null) users.get(b.getId()).sendMessage(respB.toJSONString());
-        else {
+        if (users.get(b.getId()) != null) {
+            users.get(b.getId()).sendMessage(respB.toJSONString());
+        } else {
 //            System.out.println("66666");
         }
     }
