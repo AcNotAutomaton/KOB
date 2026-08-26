@@ -12,6 +12,8 @@ import com.kob.backend.pojo.User;
 import jakarta.websocket.*;
 import jakarta.websocket.server.PathParam;
 import jakarta.websocket.server.ServerEndpoint;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
@@ -20,10 +22,14 @@ import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Component
 @ServerEndpoint("/websocket/{token}")  // 注意不要以'/'结尾
 public class WebSocketServer {
+
+    private static final Logger log = LoggerFactory.getLogger(WebSocketServer.class);
 
     final public static ConcurrentHashMap<Integer, WebSocketServer> users = new ConcurrentHashMap<>();
     private User user;
@@ -35,6 +41,14 @@ public class WebSocketServer {
     public static GameBotMapper gameBotMapper;
     public static RestTemplate restTemplate;
     public Game game = null;
+
+    /** 每局对战的裁判线程池（Game 不再继承 Thread，改为提交到池中执行） */
+    private final static ExecutorService GAME_EXECUTOR = Executors.newCachedThreadPool(runnable -> {
+        Thread t = new Thread(runnable, "game-judge");
+        t.setDaemon(true);
+        return t;
+    });
+
     private final static String addPlayerUrl = "http://127.0.0.1:3001/player/add/";
     private final static String removePlayerurl = "http://127.0.0.1:3001/player/remove/";
 
@@ -66,24 +80,34 @@ public class WebSocketServer {
     @OnOpen
     public void onOpen(Session session, @PathParam("token") String token) throws IOException {
         this.session = session;
-        Integer userId = JwtAuthentication.getUserId(token);
-        this.user = userMapper.selectById(userId);
 
-        if (users.contains(user)) {
-            onClose();
+        Integer userId;
+        try {
+            userId = JwtAuthentication.getUserId(token);
+        } catch (Exception e) {
+            log.warn("WebSocket 连接携带非法 token，已拒绝");
+            session.close();
+            return;
         }
 
-        if (this.user != null) {
-            users.put(userId, this);
-        } else {
-            this.session.close();
+        this.user = userMapper.selectById(userId);
+        if (this.user == null) {
+            session.close();
+            return;
+        }
+
+        // 顶号下线：同一用户重复连接时，关闭旧连接并覆盖映射
+        WebSocketServer old = users.put(userId, this);
+        if (old != null && old != this) {
+            old.closeSession();
         }
     }
 
     @OnClose
     public void onClose() {
         if (this.user != null) {
-            users.remove(this.user.getId());
+            // 只在映射仍指向当前实例时移除，避免误删顶号后的新连接
+            users.remove(this.user.getId(), this);
         }
     }
 
@@ -93,10 +117,13 @@ public class WebSocketServer {
         Bot botA = botMapper.selectById(aBotId), botB = botMapper.selectById(bBotId);
         Game game = new Game(13, 14, 20, a.getId(), botA, b.getId(), botB);
         game.createMap();
-        if (users.get(a.getId()) != null) users.get(a.getId()).game = game;
-        if (users.get(b.getId()) != null) users.get(b.getId()).game = game;
 
-        game.start();
+        WebSocketServer wsA = users.get(a.getId());
+        WebSocketServer wsB = users.get(b.getId());
+        if (wsA != null) wsA.game = game;
+        if (wsB != null) wsB.game = game;
+
+        GAME_EXECUTOR.execute(game);
 
         JSONObject respGame = new JSONObject();
         respGame.put("a_id", game.getPlayerA().getId());
@@ -112,18 +139,14 @@ public class WebSocketServer {
         respA.put("opponent_username", b.getUsername());
         respA.put("opponent_photo", b.getPhoto());
         respA.put("game", respGame);
-        if (users.get(a.getId()) != null) users.get(a.getId()).sendMessage(respA.toJSONString());
+        if (wsA != null) wsA.sendMessage(respA.toJSONString());
 
         JSONObject respB = new JSONObject();
         respB.put("event", "start-matching");
         respB.put("opponent_username", a.getUsername());
         respB.put("opponent_photo", a.getPhoto());
         respB.put("game", respGame);
-        if (users.get(b.getId()) != null) {
-            users.get(b.getId()).sendMessage(respB.toJSONString());
-        } else {
-//            System.out.println("66666");
-        }
+        if (wsB != null) wsB.sendMessage(respB.toJSONString());
     }
 
     /**
@@ -146,6 +169,8 @@ public class WebSocketServer {
     }
 
     private void move(int direction) {
+        Game game = this.game;
+        if (game == null) return;
         if (game.getPlayerA().getId().equals(user.getId())) {
             if (game.getPlayerA().getBotId().equals(-1))  // 亲自出马
                 game.setNextStepA(direction);
@@ -170,7 +195,7 @@ public class WebSocketServer {
 
     @OnError
     public void onError(Session session, Throwable error) {
-        error.printStackTrace();
+        log.error("WebSocket 连接异常，userId={}", user != null ? user.getId() : null, error);
     }
 
     public void sendMessage(String message) {
@@ -178,8 +203,16 @@ public class WebSocketServer {
             try {
                 this.session.getBasicRemote().sendText(message);
             } catch (IOException e) {
-                e.printStackTrace();
+                log.error("WebSocket 消息发送失败，userId={}", user != null ? user.getId() : null, e);
             }
+        }
+    }
+
+    private void closeSession() {
+        try {
+            this.session.close();
+        } catch (IOException e) {
+            log.warn("关闭旧 WebSocket 会话失败", e);
         }
     }
 }

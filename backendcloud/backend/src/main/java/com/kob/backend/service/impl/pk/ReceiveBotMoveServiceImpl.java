@@ -9,16 +9,24 @@ import org.springframework.stereotype.Service;
 public class ReceiveBotMoveServiceImpl implements ReceiveBotMoveService {
     @Override
     public String receiveBotMove(Integer userId, Integer direction, Integer enemy) {
-        if (WebSocketServer.users.get(userId) != null||WebSocketServer.users.get(enemy) != null) {
-            Game game = null;
-            if(enemy.equals(4)) game = WebSocketServer.users.get(userId).game;
-            else game = WebSocketServer.users.get(enemy).game;
-            if (game != null) {
-                if (game.getPlayerA().getId().equals(userId)) {
-                    game.setNextStepA(direction);
-                } else if (game.getPlayerB().getId().equals(userId)) {
-                    game.setNextStepB(direction);
-                }
+        // Bot 回传操作时本人可能已掉线（或对手是 AI 无连接），从任一在线一方的连接取对局
+        Game game = null;
+        WebSocketServer ws = WebSocketServer.users.get(userId);
+        if (ws != null) {
+            game = ws.game;
+        }
+        if (game == null && enemy != null) {
+            ws = WebSocketServer.users.get(enemy);
+            if (ws != null) {
+                game = ws.game;
+            }
+        }
+
+        if (game != null) {
+            if (game.getPlayerA().getId().equals(userId)) {
+                game.setNextStepA(direction);
+            } else if (game.getPlayerB().getId().equals(userId)) {
+                game.setNextStepB(direction);
             }
         }
         return "receive bot move success";

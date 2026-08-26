@@ -122,7 +122,7 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router';
-import $ from 'jquery'
+import { ajax } from '../../../utils/requests'
 import { useStore } from 'vuex'
 import router from '../../../router/index'
 
@@ -135,14 +135,11 @@ let records = ref([])
 let haveText = ref(true)
 
 const get_user_info = () => {
-    $.ajax({
-        url: "http://127.0.0.1:3000/api/user/account/user/info/",
+    ajax({
+        url: "/api/user/account/user/info/",
         type: "get",
         data:{
             id: user_id.value
-        },
-        headers: {
-            Authorization: "Bearer " + store.state.user.token,
         },
         success(resp) {
             user.value = resp
@@ -151,14 +148,11 @@ const get_user_info = () => {
 }
 
 const refresh_bots = () => {
-    $.ajax({
-        url: "http://127.0.0.1:3000/api/user/bot/getlist/user/",
+    ajax({
+        url: "/api/user/bot/getlist/user/",
         type: "get",
         data:{
             user_id: user_id.value
-        },
-        headers: {
-            Authorization: "Bearer " + store.state.user.token,
         },
         success(resp) {
             bots.value = resp;
@@ -169,15 +163,12 @@ const refresh_bots = () => {
 }
 
 const get_list = ()=>{
-    $.ajax({
-        url: "http://127.0.0.1:3000/api/record/getuesrlist/",
+    ajax({
+        url: "/api/record/getuesrlist/",
         data: {
             id: user_id.value
         },
         type: "get",
-        headers: {
-            Authorization: "Bearer " + store.state.user.token,
-        },
         success(resp) {
             records.value = resp.records;
         }

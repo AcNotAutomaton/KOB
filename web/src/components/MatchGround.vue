@@ -43,7 +43,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useStore } from 'vuex';
-import $ from 'jquery';
+import { ajax } from '../utils/requests'
 
 const store = useStore();
 let match_btn_info = ref("开始匹配");
@@ -67,12 +67,9 @@ const click_match_btn = () => {
 }
 
 const refresh_bots = () => {
-    $.ajax({
-        url: "http://127.0.0.1:3000/api/user/bot/getlist/",
+    ajax({
+        url: "/api/user/bot/getlist/",
         type: "get",
-        headers: {
-            Authorization: "Bearer " + store.state.user.token,
-        },
         success(resp) {
             bots.value = resp;
         }

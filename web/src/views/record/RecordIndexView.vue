@@ -58,7 +58,7 @@
 import ContentField from '../../components/ContentField.vue'
 import { useStore } from 'vuex';
 import { ref } from 'vue';
-import $ from 'jquery';
+import { ajax } from '../../utils/requests'
 import router from '../../router/index'
 
 const store = useStore();
@@ -93,15 +93,12 @@ const udpate_pages = () => {
 
 const pull_page = page => {
     current_page = page;
-    $.ajax({
-        url: "http://127.0.0.1:3000/api/record/getlist/",
+    ajax({
+        url: "/api/record/getlist/",
         data: {
             page,
         },
         type: "get",
-        headers: {
-            Authorization: "Bearer " + store.state.user.token,
-        },
         success(resp) {
             records.value = resp.records;
             total_records = resp.records_count;
