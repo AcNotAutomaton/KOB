@@ -11,7 +11,7 @@
  Target Server Version : 80036
  File Encoding         : 65001
 
- Date: 04/07/2025 18:51:38
+ Date: 31/08/2026 18:05:38
 */
 
 SET NAMES utf8mb4;
@@ -25,7 +25,7 @@ CREATE TABLE `article`  (
   `id` int NOT NULL AUTO_INCREMENT,
   `markdown` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of article
@@ -48,12 +48,12 @@ CREATE TABLE `bot`  (
   `modifytime` datetime NULL DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `table_name_id_uindex`(`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 11 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 13 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of bot
 -- ----------------------------
-INSERT INTO `bot` VALUES (3, 4, 'ai', 'ai', 'package com.kob.botrunningsystem.utils;\n\nimport java.io.File;\nimport java.io.FileNotFoundException;\nimport java.util.LinkedList;\nimport java.util.List;\nimport java.util.Scanner;\n\npublic class Bot implements java.util.function.Supplier<Integer> {\n\n    static class Cell {\n        public int x, y;\n\n        public Cell(int x, int y) {\n            this.x = x;\n            this.y = y;\n        }\n    }\n\n    private static List<Cell> aCells = new LinkedList<>();\n    private static List<Cell> bCells = new LinkedList<>();\n\n    private static final int DEPTH = 10;\n\n    private static final int[] dx = {-1, 0, 1, 0}, dy = {0, 1, 0, -1};\n\n    private static int step; // 回合数\n\n    private static int move = -1;\n\n    // 检验当前回合，长度是否增加  true 增加, 增加时-头部移动,尾部不变, 不增加-头部移动,尾部删除\n    private static boolean checkTailIncreasing(int step) {\n        if (step <= 10) return true;    // 前10回合每回合长度+1\n        return step % 3 == 1;    // 10回合之后没三回合长度+1\n    }\n\n    // 通过操作字符串 返回玩家位置list      起始坐标         玩家操作信息字符串\n    public static List<Cell> getCells(int sx, int sy, String steps) {\n        List<Cell> res = new LinkedList<>();\n        int x = sx, y = sy;\n        int step = 0;\n        res.add(new Cell(x, y));\n        for (int i = 0; i < steps.length(); i++) {\n            int d = steps.charAt(i) - \'0\';\n            x += dx[d];\n            y += dy[d];\n            res.add(new Cell(x, y));\n            if (!checkTailIncreasing(++step)) { // 长度不增加,\n                res.remove(0);\n            }\n        }\n        return res;\n    }\n\n    // 地图#自己起始横坐标#自己起始纵坐标#(自己操作)#对手起始横坐标#对手起始纵坐标#(对手操作)\n    public static Integer nextMove(String input) {\n        String[] strs = input.split(\"#\");    // (#拼接)   棋盘(0/1)#a玩家起始x坐标#a玩家起始y坐标   // 对于棋盘来说,只有可走不可走(0/1)\n        int[][] g = new int[13][14];    // 棋盘中 0:可走位置 1:不可走位置\n        // 棋盘 13 * 14\n        for (int i = 0, k = 0; i < 13; i++) {\n            for (int j = 0; j < 14; j++, k++) {\n                if (strs[0].charAt(k) == \'1\') {    // 棋盘中的墙\n                    g[i][j] = 1;\n                }\n            }\n        }\n\n        // 起始坐标\n        int aSx = Integer.parseInt(strs[1]), aSy = Integer.parseInt(strs[2]);\n        int bSx = Integer.parseInt(strs[4]), bSy = Integer.parseInt(strs[5]);\n\n        // 把操作 转换为🐍\n        aCells = getCells(aSx, aSy, strs[3].substring(1, strs[3].length() - 1)); // (1010101)\n        bCells = getCells(bSx, bSy, strs[6].substring(1, strs[6].length() - 1));\n\n        // 回合数 玩家移动次数\n        step = strs[3].length() - 2;\n\n        // 将初始🐍转换为地图信息\n        for (Cell c : aCells) g[c.x][c.y] = 1;    // a玩家游戏位置\n        for (Cell c : bCells) g[c.x][c.y] = 1;    // b玩家游戏位置\n\n        // 特殊情况处理 -----------------------------------\n        // 玩家可走当前可走方向数量只有4种 0, 1, 2, 3\n        int moveNumber = moveNumber(g, aCells);\n        if (moveNumber == 0) { // 0种 表示已经输, 特殊处理, 无需minmax, 随便返回一个方向即可\n            return 0;\n        }\n        if (moveNumber == 1)  // 1种 只能这样走, 特殊处理, 无需minmax, 返回此时能走的方向\n            for (int i = 0; i < 4; i++) {\n                int x = aCells.get(aCells.size() - 1).x + dx[i];\n                int y = aCells.get(aCells.size() - 1).y + dy[i];\n                if (isMove(g, x, y))\n                    return i;\n            }\n\n        int depth = DEPTH; // 深度\n        max(g, depth, Integer.MIN_VALUE, Integer.MAX_VALUE);\n\n        return move; // 返回操作\n    }\n\n    // 棋盘中 0:可走位置 1:玩家位置\n    // minimax算法实现          棋盘   深度: depth回合        α剪枝 β剪枝\n    public static int max(int[][] g, int depth, int alpha, int beta) {\n        step++; // 回合数 ++;\n\n        int score = checkScore(g, aCells, bCells, depth); // 计算分数\n        if (score <= 11) return score; // 必输的局\n        if (depth == 0) return score; // 走到最底层, 返回全局分数\n\n        // move\n        int i = 0;\n        for (i = 0; i < 4; i++) {\n            int x = aCells.get(aCells.size() - 1).x + dx[i];\n            int y = aCells.get(aCells.size() - 1).y + dy[i];\n            if (!isMove(g, x, y)) continue;\n            Cell cell = null;\n            g[x][y] = 1;\n            aCells.add(new Cell(x, y)); // 更新玩家位置信息, 玩家位置信息为全局变量\n\n            if (!checkTailIncreasing(step)) { // 长度不增加\n                cell = new Cell(aCells.get(0).x, aCells.get(0).y);\n                g[cell.x][cell.y] = 0;\n                aCells.remove(0);\n            }\n\n            int value = min(g, depth, alpha, beta, score);\n\n            // 还原现场\n            g[x][y] = 0;\n            aCells.remove(aCells.size() - 1);\n            if (cell != null) {\n                aCells.add(0, cell);\n                g[cell.x][cell.y] = 1;\n            }\n\n            // α剪枝 , 再分数判断中进行方向判断\n            // alpha = Math.max(alpha, value);\n            if (value > alpha) {\n                alpha = value;\n                if (depth == DEPTH)\n                    move = i;\n            }\n            if (alpha >= beta) {\n                return beta;\n            }\n        }\n        return alpha;\n    }\n\n    public static int min(int[][] g, int depth, int alpha, int beta, int aScore) {\n\n        // b落子\n        for (int i = 0; i < 4; i++) {\n            int x = bCells.get(bCells.size() - 1).x + dx[i];\n            int y = bCells.get(bCells.size() - 1).y + dy[i];\n\n            // 判断位置是否合法(是否能走), 属于分数的范畴,直接失败的操作,单独提取出来\n            if (!isMove(g, x, y)) continue;\n\n            // 操作\n            Cell cell = null;\n            g[x][y] = 1;\n            bCells.add(new Cell(x, y));\n\n            if (!checkTailIncreasing(step)) { // 长度不增加\n                cell = new Cell(bCells.get(0).x, bCells.get(0).y);\n                g[cell.x][cell.y] = 0;\n                bCells.remove(0);\n\n            }\n\n            int value = max(g, depth - 1, alpha, beta);\n            // 还原现场\n            step--; // 回去,回合数也 --;\n            g[x][y] = 0;\n            bCells.remove(bCells.size() - 1);\n            if (cell != null) {\n                bCells.add(0, cell);\n                g[cell.x][cell.y] = 1;\n            }\n\n            // β剪枝\n            beta = Math.min(beta, value);\n            if (alpha >= beta) {\n                return alpha;\n            }\n        }\n        return beta;\n    }\n\n    // 下个位置是可移动\n    public static boolean isMove(int[][] g, int x, int y) {\n        // 越界\n        if (x < 0 || x >= 13 || y < 0 || y >= 14) return false;\n        // 碰撞 0:可走位置 1:不可走 玩家位置,障碍物\n        if (g[x][y] == 1) return false;\n\n        return true;\n    }\n\n    // 此位置下一步可走方向数量\n    public static int moveNumber(int[][] g, List<Cell> playerCells) {\n        int res = 0;\n        for (int i = 0; i < 4; i++) {\n            int x = playerCells.get(playerCells.size() - 1).x + dx[i];\n            int y = playerCells.get(playerCells.size() - 1).y + dy[i];\n            if (isMove(g, x, y))\n                res++;\n        }\n        return res;\n    }\n\n    // 只考虑自己\n    // 计算分数 评估函数( 层数 * 可移动方向数量)             自己的信息       对手的信息\n    public static int checkScore(int[][] g, List<Cell> playerCells, List<Cell> foe, int depth) {\n        // 失败  玩家四个方法无法移动, 失败的情况归属到一般情况中  <= 11\n        if (moveNumber(g, playerCells) == 0) return (DEPTH - depth + 1) * 1;\n\n        // 返回当前位置可走步数 (小分数)    扩大可走位置的倍数\n        return (DEPTH - depth + 1) * (int) (Math.pow(moveNumber(g, playerCells) + 1, 2)) + 11;\n\n    }\n\n    @Override\n    public Integer get() {\n        // (#拼接)\n        File file = new File(\"input.txt\");\n        try {\n            Scanner sc = new Scanner(file);\n            return nextMove(sc.next());\n        } catch (FileNotFoundException e) {\n            throw new RuntimeException(e);\n        }\n    }\n}\n', 1725, 115, '2023-03-21 19:38:56', '2023-03-22 14:37:22');
+INSERT INTO `bot` VALUES (3, 4, 'ai', 'ai', 'package com.kob.botrunningsystem.utils;\n\nimport java.io.File;\nimport java.io.FileNotFoundException;\nimport java.util.LinkedList;\nimport java.util.List;\nimport java.util.Scanner;\n\npublic class Bot implements java.util.function.Supplier<Integer> {\n\n    static class Cell {\n        public int x, y;\n\n        public Cell(int x, int y) {\n            this.x = x;\n            this.y = y;\n        }\n    }\n\n    private static List<Cell> aCells = new LinkedList<>();\n    private static List<Cell> bCells = new LinkedList<>();\n\n    private static final int DEPTH = 10;\n\n    private static final int[] dx = {-1, 0, 1, 0}, dy = {0, 1, 0, -1};\n\n    private static int step; // 回合数\n\n    private static int move = -1;\n\n    // 检验当前回合，长度是否增加  true 增加, 增加时-头部移动,尾部不变, 不增加-头部移动,尾部删除\n    private static boolean checkTailIncreasing(int step) {\n        if (step <= 10) return true;    // 前10回合每回合长度+1\n        return step % 3 == 1;    // 10回合之后没三回合长度+1\n    }\n\n    // 通过操作字符串 返回玩家位置list      起始坐标         玩家操作信息字符串\n    public static List<Cell> getCells(int sx, int sy, String steps) {\n        List<Cell> res = new LinkedList<>();\n        int x = sx, y = sy;\n        int step = 0;\n        res.add(new Cell(x, y));\n        for (int i = 0; i < steps.length(); i++) {\n            int d = steps.charAt(i) - \'0\';\n            x += dx[d];\n            y += dy[d];\n            res.add(new Cell(x, y));\n            if (!checkTailIncreasing(++step)) { // 长度不增加,\n                res.remove(0);\n            }\n        }\n        return res;\n    }\n\n    // 地图#自己起始横坐标#自己起始纵坐标#(自己操作)#对手起始横坐标#对手起始纵坐标#(对手操作)\n    public static Integer nextMove(String input) {\n        String[] strs = input.split(\"#\");    // (#拼接)   棋盘(0/1)#a玩家起始x坐标#a玩家起始y坐标   // 对于棋盘来说,只有可走不可走(0/1)\n        int[][] g = new int[13][14];    // 棋盘中 0:可走位置 1:不可走位置\n        // 棋盘 13 * 14\n        for (int i = 0, k = 0; i < 13; i++) {\n            for (int j = 0; j < 14; j++, k++) {\n                if (strs[0].charAt(k) == \'1\') {    // 棋盘中的墙\n                    g[i][j] = 1;\n                }\n            }\n        }\n\n        // 起始坐标\n        int aSx = Integer.parseInt(strs[1]), aSy = Integer.parseInt(strs[2]);\n        int bSx = Integer.parseInt(strs[4]), bSy = Integer.parseInt(strs[5]);\n\n        // 把操作 转换为🐍\n        aCells = getCells(aSx, aSy, strs[3].substring(1, strs[3].length() - 1)); // (1010101)\n        bCells = getCells(bSx, bSy, strs[6].substring(1, strs[6].length() - 1));\n\n        // 回合数 玩家移动次数\n        step = strs[3].length() - 2;\n\n        // 将初始🐍转换为地图信息\n        for (Cell c : aCells) g[c.x][c.y] = 1;    // a玩家游戏位置\n        for (Cell c : bCells) g[c.x][c.y] = 1;    // b玩家游戏位置\n\n        // 特殊情况处理 -----------------------------------\n        // 玩家可走当前可走方向数量只有4种 0, 1, 2, 3\n        int moveNumber = moveNumber(g, aCells);\n        if (moveNumber == 0) { // 0种 表示已经输, 特殊处理, 无需minmax, 随便返回一个方向即可\n            return 0;\n        }\n        if (moveNumber == 1)  // 1种 只能这样走, 特殊处理, 无需minmax, 返回此时能走的方向\n            for (int i = 0; i < 4; i++) {\n                int x = aCells.get(aCells.size() - 1).x + dx[i];\n                int y = aCells.get(aCells.size() - 1).y + dy[i];\n                if (isMove(g, x, y))\n                    return i;\n            }\n\n        int depth = DEPTH; // 深度\n        max(g, depth, Integer.MIN_VALUE, Integer.MAX_VALUE);\n\n        return move; // 返回操作\n    }\n\n    // 棋盘中 0:可走位置 1:玩家位置\n    // minimax算法实现          棋盘   深度: depth回合        α剪枝 β剪枝\n    public static int max(int[][] g, int depth, int alpha, int beta) {\n        step++; // 回合数 ++;\n\n        int score = checkScore(g, aCells, bCells, depth); // 计算分数\n        if (score <= 11) return score; // 必输的局\n        if (depth == 0) return score; // 走到最底层, 返回全局分数\n\n        // move\n        int i = 0;\n        for (i = 0; i < 4; i++) {\n            int x = aCells.get(aCells.size() - 1).x + dx[i];\n            int y = aCells.get(aCells.size() - 1).y + dy[i];\n            if (!isMove(g, x, y)) continue;\n            Cell cell = null;\n            g[x][y] = 1;\n            aCells.add(new Cell(x, y)); // 更新玩家位置信息, 玩家位置信息为全局变量\n\n            if (!checkTailIncreasing(step)) { // 长度不增加\n                cell = new Cell(aCells.get(0).x, aCells.get(0).y);\n                g[cell.x][cell.y] = 0;\n                aCells.remove(0);\n            }\n\n            int value = min(g, depth, alpha, beta, score);\n\n            // 还原现场\n            g[x][y] = 0;\n            aCells.remove(aCells.size() - 1);\n            if (cell != null) {\n                aCells.add(0, cell);\n                g[cell.x][cell.y] = 1;\n            }\n\n            // α剪枝 , 再分数判断中进行方向判断\n            // alpha = Math.max(alpha, value);\n            if (value > alpha) {\n                alpha = value;\n                if (depth == DEPTH)\n                    move = i;\n            }\n            if (alpha >= beta) {\n                return beta;\n            }\n        }\n        return alpha;\n    }\n\n    public static int min(int[][] g, int depth, int alpha, int beta, int aScore) {\n\n        // b落子\n        for (int i = 0; i < 4; i++) {\n            int x = bCells.get(bCells.size() - 1).x + dx[i];\n            int y = bCells.get(bCells.size() - 1).y + dy[i];\n\n            // 判断位置是否合法(是否能走), 属于分数的范畴,直接失败的操作,单独提取出来\n            if (!isMove(g, x, y)) continue;\n\n            // 操作\n            Cell cell = null;\n            g[x][y] = 1;\n            bCells.add(new Cell(x, y));\n\n            if (!checkTailIncreasing(step)) { // 长度不增加\n                cell = new Cell(bCells.get(0).x, bCells.get(0).y);\n                g[cell.x][cell.y] = 0;\n                bCells.remove(0);\n\n            }\n\n            int value = max(g, depth - 1, alpha, beta);\n            // 还原现场\n            step--; // 回去,回合数也 --;\n            g[x][y] = 0;\n            bCells.remove(bCells.size() - 1);\n            if (cell != null) {\n                bCells.add(0, cell);\n                g[cell.x][cell.y] = 1;\n            }\n\n            // β剪枝\n            beta = Math.min(beta, value);\n            if (alpha >= beta) {\n                return alpha;\n            }\n        }\n        return beta;\n    }\n\n    // 下个位置是可移动\n    public static boolean isMove(int[][] g, int x, int y) {\n        // 越界\n        if (x < 0 || x >= 13 || y < 0 || y >= 14) return false;\n        // 碰撞 0:可走位置 1:不可走 玩家位置,障碍物\n        if (g[x][y] == 1) return false;\n\n        return true;\n    }\n\n    // 此位置下一步可走方向数量\n    public static int moveNumber(int[][] g, List<Cell> playerCells) {\n        int res = 0;\n        for (int i = 0; i < 4; i++) {\n            int x = playerCells.get(playerCells.size() - 1).x + dx[i];\n            int y = playerCells.get(playerCells.size() - 1).y + dy[i];\n            if (isMove(g, x, y))\n                res++;\n        }\n        return res;\n    }\n\n    // 只考虑自己\n    // 计算分数 评估函数( 层数 * 可移动方向数量)             自己的信息       对手的信息\n    public static int checkScore(int[][] g, List<Cell> playerCells, List<Cell> foe, int depth) {\n        // 失败  玩家四个方法无法移动, 失败的情况归属到一般情况中  <= 11\n        if (moveNumber(g, playerCells) == 0) return (DEPTH - depth + 1) * 1;\n\n        // 返回当前位置可走步数 (小分数)    扩大可走位置的倍数\n        return (DEPTH - depth + 1) * (int) (Math.pow(moveNumber(g, playerCells) + 1, 2)) + 11;\n\n    }\n\n    @Override\n    public Integer get() {\n        // (#拼接)\n        File file = new File(\"input.txt\");\n        try {\n            Scanner sc = new Scanner(file);\n            return nextMove(sc.next());\n        } catch (FileNotFoundException e) {\n            throw new RuntimeException(e);\n        }\n    }\n}\n', 1675, 139, '2023-03-21 19:38:56', '2023-03-22 14:37:22');
 
 -- ----------------------------
 -- Table structure for game_bot
@@ -67,7 +67,7 @@ CREATE TABLE `game_bot`  (
   `b_user_id` int NOT NULL,
   `b_bot_id` int NOT NULL,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 2144350209 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 2144350216 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of game_bot
@@ -76,10 +76,12 @@ INSERT INTO `game_bot` VALUES (-2146422783, 115969, 1, -1, 17, -1);
 INSERT INTO `game_bot` VALUES (-2130796543, 455243, 3, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (-2130784254, 154318, 3, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (-2108674047, 145805, 1, -1, 4, 3);
+INSERT INTO `game_bot` VALUES (-1989459966, 271161, 3, 12, 9, -1);
 INSERT INTO `game_bot` VALUES (-1987039231, 282032, 17, -1, 1, -1);
 INSERT INTO `game_bot` VALUES (-1961873407, 466387, 3, -1, 18, -1);
 INSERT INTO `game_bot` VALUES (-1957679103, 467008, 1, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (-1781526527, 393909, 15, -1, 4, 3);
+INSERT INTO `game_bot` VALUES (-1771364351, 211850, 3, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (-1752158207, 488468, 16, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (-1752043519, 224508, 9, 8, 4, 3);
 INSERT INTO `game_bot` VALUES (-1695854591, 365835, 3, -1, 4, 3);
@@ -87,14 +89,18 @@ INSERT INTO `game_bot` VALUES (-1680863230, 162253, 15, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (-1596915711, 237727, 1, -1, 9, -1);
 INSERT INTO `game_bot` VALUES (-1589719038, 222824, 3, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (-1580191743, 490610, 1, -1, 4, 3);
+INSERT INTO `game_bot` VALUES (-1544941567, 127281, 3, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (-1504600062, 180630, 21, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (-1479434239, 309337, 21, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (-1437585406, 443174, 1, -1, 17, -1);
 INSERT INTO `game_bot` VALUES (-1420713982, 216483, 21, -1, 4, 3);
+INSERT INTO `game_bot` VALUES (-1385455615, 240508, 3, -1, 4, 3);
+INSERT INTO `game_bot` VALUES (-1372905471, 466986, 3, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (-1303273471, 434765, 21, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (-1294979071, 447230, 1, 9, 4, 3);
 INSERT INTO `game_bot` VALUES (-1286496254, 267989, 3, -1, 21, -1);
 INSERT INTO `game_bot` VALUES (-1215287295, 119106, 17, -1, 1, -1);
+INSERT INTO `game_bot` VALUES (-1184153598, 102424, 3, -1, 9, -1);
 INSERT INTO `game_bot` VALUES (-1177538559, 338697, 1, 9, 4, 3);
 INSERT INTO `game_bot` VALUES (-1156575231, 470653, 15, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (-1078026239, 160177, 3, -1, 4, 3);
@@ -105,21 +111,32 @@ INSERT INTO `game_bot` VALUES (-992915454, 295171, 3, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (-942563326, 390924, 21, -1, 3, 2);
 INSERT INTO `game_bot` VALUES (-918614014, 238512, 3, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (-875548670, 270327, 17, -1, 4, 3);
+INSERT INTO `game_bot` VALUES (-856997887, 231067, 3, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (-784367615, 313751, 3, -1, 8, -1);
 INSERT INTO `game_bot` VALUES (-621703166, 200148, 9, -1, 4, 3);
+INSERT INTO `game_bot` VALUES (-609542143, 147446, 3, -1, 4, 3);
+INSERT INTO `game_bot` VALUES (-588574719, 186358, 3, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (-588148734, 331965, 9, -1, 4, 3);
+INSERT INTO `game_bot` VALUES (-580173822, 439253, 3, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (-535715838, 116242, 3, -1, 21, -1);
+INSERT INTO `game_bot` VALUES (-525660158, 291832, 3, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (-429178878, 177457, 3, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (-359649278, 490653, 17, -1, 4, 3);
+INSERT INTO `game_bot` VALUES (-349511678, 288680, 3, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (-296742911, 217324, 15, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (-288346110, 442881, 1, -1, 17, -1);
+INSERT INTO `game_bot` VALUES (-282386430, 107175, 3, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (-281108478, 250782, 3, -1, 4, 3);
+INSERT INTO `game_bot` VALUES (-273981439, 187828, 3, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (-264318975, 240701, 3, -1, 4, 3);
+INSERT INTO `game_bot` VALUES (-215269374, 322819, 3, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (-204386303, 383526, 3, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (-74436606, 226968, 1, -1, 17, -1);
 INSERT INTO `game_bot` VALUES (-40882174, 442495, 9, -1, 17, -1);
 INSERT INTO `game_bot` VALUES (1060866, 285063, 1, -1, 17, -1);
 INSERT INTO `game_bot` VALUES (30535681, 280650, 3, -1, 4, 3);
+INSERT INTO `game_bot` VALUES (61476866, 247579, 3, -1, 4, 3);
+INSERT INTO `game_bot` VALUES (78319618, 227253, 3, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (78352386, 124727, 3, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (101724161, 439746, 1, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (168906754, 444148, 3, 2, 4, 3);
@@ -127,6 +144,7 @@ INSERT INTO `game_bot` VALUES (173027330, 180809, 1, -1, 17, -1);
 INSERT INTO `game_bot` VALUES (185610242, 406796, 18, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (214970370, 448783, 1, -1, 17, -1);
 INSERT INTO `game_bot` VALUES (252719106, 461361, 1, -1, 17, -1);
+INSERT INTO `game_bot` VALUES (321601537, 203886, 3, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (357670914, 414626, 3, -1, 21, -1);
 INSERT INTO `game_bot` VALUES (416411650, 327442, 3, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (420491265, 204040, 1, -1, 17, -1);
@@ -134,15 +152,19 @@ INSERT INTO `game_bot` VALUES (458240001, 310185, 16, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (475017217, 138960, 1, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (554795009, 437058, 3, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (558895106, 437494, 15, -1, 4, 3);
+INSERT INTO `game_bot` VALUES (711663618, 257041, 3, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (714092545, 154448, 3, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (735064065, 493070, 1, -1, 17, -1);
 INSERT INTO `game_bot` VALUES (768712705, 286139, 3, -1, 21, -1);
 INSERT INTO `game_bot` VALUES (776998914, 262562, 9, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (802172929, 442740, 1, -1, 17, -1);
+INSERT INTO `game_bot` VALUES (803938306, 397685, 3, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (814755842, 249791, 3, -1, 4, 3);
+INSERT INTO `game_bot` VALUES (824848386, 404598, 3, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (898641921, 178105, 3, -1, 18, -1);
 INSERT INTO `game_bot` VALUES (907030529, 286035, 1, -1, 17, -1);
 INSERT INTO `game_bot` VALUES (928002049, 309003, 1, -1, 4, 3);
+INSERT INTO `game_bot` VALUES (963330049, 118127, 3, 12, 9, -1);
 INSERT INTO `game_bot` VALUES (974139393, 396308, 16, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (982528001, 478614, 3, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (991010818, 374713, 21, -1, 4, 3);
@@ -154,6 +176,7 @@ INSERT INTO `game_bot` VALUES (1255157762, 293502, 18, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (1337036801, 407161, 3, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (1343229953, 427964, 9, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (1343332353, 473894, 21, -1, 4, 3);
+INSERT INTO `game_bot` VALUES (1361788929, 220454, 3, -1, 9, -1);
 INSERT INTO `game_bot` VALUES (1418735617, 115047, 3, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (1435512834, 222964, 1, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (1439707137, 411150, 1, -1, 17, -1);
@@ -172,7 +195,9 @@ INSERT INTO `game_bot` VALUES (1737596930, 378441, 3, 2, 21, -1);
 INSERT INTO `game_bot` VALUES (1800417282, 262812, 1, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (1804611585, 145092, 17, -1, 1, -1);
 INSERT INTO `game_bot` VALUES (1829777410, 158410, 18, -1, 4, 3);
+INSERT INTO `game_bot` VALUES (1957367810, 428135, 3, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (2014326786, 105268, 1, -1, 17, -1);
+INSERT INTO `game_bot` VALUES (2024488961, 349625, 3, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (2035392514, 196003, 21, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (2038341634, 299685, 3, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (2039545857, 120356, 9, -1, 4, 3);
@@ -180,6 +205,12 @@ INSERT INTO `game_bot` VALUES (2094018561, 409478, 1, -1, 17, -1);
 INSERT INTO `game_bot` VALUES (2136055810, 299531, 21, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (2140155906, 387505, 18, -1, 4, 3);
 INSERT INTO `game_bot` VALUES (2144350209, 225085, 1, -1, 17, -1);
+INSERT INTO `game_bot` VALUES (2144350210, 493627, 22, -1, 4, 3);
+INSERT INTO `game_bot` VALUES (2144350211, 493628, 3, -1, 4, 3);
+INSERT INTO `game_bot` VALUES (2144350212, 493629, 22, -1, 4, 3);
+INSERT INTO `game_bot` VALUES (2144350213, 493630, 3, -1, 4, 3);
+INSERT INTO `game_bot` VALUES (2144350214, 493631, 3, -1, 4, 3);
+INSERT INTO `game_bot` VALUES (2144350215, 493632, 3, -1, 4, 3);
 
 -- ----------------------------
 -- Table structure for record
@@ -199,7 +230,7 @@ CREATE TABLE `record`  (
   `loser` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
   `createtime` datetime NULL DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 493626 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 493633 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of record
@@ -330,10 +361,15 @@ INSERT INTO `record` VALUES (123, 9, 11, 1, 4, 1, 12, '1111111111003300', '22222
 INSERT INTO `record` VALUES (124, 9, 11, 1, 4, 1, 12, '1111111100300033330303321232111111010000323322123303323001103001111111112212', '2222223003032333300300111112222223221112123333300322300033011111100300121211', '11111111111111100000000000011001010000100111000000001001100010110001011000000000000110010000001001100000000000011010001101000110010000000011100100001010011000000000000111111111111111', 'A', '2023-03-24 15:05:37');
 INSERT INTO `record` VALUES (125, 9, 11, 1, 4, 1, 12, '0010112211111000003333333321111211111', '2222223000330030332223330101033323220', '11111111111111110000000101011001000000010110100000001001101000000000011000000000100110000011000001100100000000011000000000010110010000000101101000000010011010100000001111111111111111', 'B', '2023-03-24 15:05:59');
 INSERT INTO `record` VALUES (126, 1, 11, 1, 4, 1, 12, '0000000100011111221112222332300030300011221110101222222230000322222', '2222222300000001222222233323233030032230000000032222321232123221010', '11111111111111100000001110011000000011000111000010000001100000010000011000000000000110001100110001100000000000011000001000000110000001000011100011000000011001110000000111111111111111', 'B', '2023-03-27 09:10:21');
+INSERT INTO `record` VALUES (102424, 3, 11, 1, 9, 1, 12, '0', '0', '11111111111111110000000000011000010010000110010100000001100000100011011010000000100110000000000001100100000001011011000100000110000000101001100001001000011000000000001111111111111111', 'B', '2025-07-13 02:01:23');
+INSERT INTO `record` VALUES (107175, 3, 11, 1, 4, 1, 12, '1', '0', '11111111111111100100000100011001000010000110000000010001101000000000011010001001001110000000000001110010010001011000000000010110001000000001100001000010011000100000100111111111111111', 'B', '2025-08-17 13:08:11');
 INSERT INTO `record` VALUES (108619, 3, 11, 1, 4, 1, 12, '001110000001112222333230010100101111222232223003', '223030322222222303332333211110121211012100030100', '11111111111111100000000001011000100000000110110000000001100000000001011001000000011110100100100101111000000010011010000000000110000000001101100000000100011010000000000111111111111111', 'B', '2025-04-07 00:10:53');
 INSERT INTO `record` VALUES (116242, 3, 11, 1, 21, 1, 12, '0', '0', '11111111111111110000000100011000010000100110000100000001100011001000011000100010000110000000000001100001000100011000010011000110000000100001100100001000011000100000001111111111111111', 'B', '2023-07-07 19:07:10');
+INSERT INTO `record` VALUES (118127, 3, 11, 1, 9, 1, 12, '', '', '11111111111111100000100000011001000000000110000001000001100000000110011010100001001110000100100001110010000101011001100000000110000010000001100000000010011000000100000111111111111111', 'A', '2025-07-13 02:02:21');
 INSERT INTO `record` VALUES (120356, 9, 11, 1, 4, 1, 12, '110301000101112211112332330303233001003232232212211111100323000000', '322300323032221112110030032303232212322110100011222322332211123330', '11111111111111100000000000011000000000001111010000110001100001000001011100000001000110000100100001100010000000111010000010000110001100001011110000000000011000000000000111111111111111', 'B', '2023-05-25 10:59:46');
 INSERT INTO `record` VALUES (124727, 3, 11, 1, 4, 1, 12, '000011111110030032230321', '222223032230001000112223', '11111111111111100100100000011000000110000110001000010001101100001000011100000000000110000000000001100000000000111000010000110110001000010001100001100000011000000100100111111111111111', 'A', '2025-06-01 23:22:03');
+INSERT INTO `record` VALUES (127281, 3, 11, 1, 4, 1, 12, '111000011011100001211030333222232', '222222222230000032322223300100033', '11111111111111100000010000011000010100000110000001000001100100110010011000001000100110000000000001100100010000011001001100100110000010000001100000101000011000001000000111111111111111', 'A', '2025-08-17 13:17:28');
+INSERT INTO `record` VALUES (147446, 3, 11, 1, 4, 1, 12, '111110000110030000322222122122230030030000121211223032', '222222323000000301112222223300010033032230303230323300', '11111111111111101000000000011000000000000111111000010001110000001100011000000000000110100000000101100000000000011000110000001110001000011111100000000000011000000000010111111111111111', 'B', '2025-11-12 22:13:47');
 INSERT INTO `record` VALUES (154318, 3, 11, 1, 4, 1, 12, '01110001101112233232333330011101011112211212233003323333330110', '22230300322223330030012110111122233323330030033221233232212110', '11111111111111100000010000011010100000000110000000100001110000010000011001010000100110100000000101100100001010011000001000001110000100000001100000000101011000001000000111111111111111', 'A', '2025-03-11 17:56:09');
 INSERT INTO `record` VALUES (158290, 3, 11, 1, 4, 1, 12, '00111111100003301103332', '22222222303221233000000', '11111111111111100000110000011100010010010110000000000001100000000000011010000001000110010011001001100010000001011000000000000110000000000001101001001000111000001100000111111111111111', 'B', '2025-03-11 21:16:46');
 INSERT INTO `record` VALUES (160177, 3, 11, 1, 4, 1, 12, '111101001033300111000333332212221111221232333333000000000111121122333221110', '222222223000032303000110112222222300032223000300011011222222222300000300100', '11111111111111101001000000011000000000000110011000010001100001000101011000000000000110000111100001100000000000011010100010000110001000011001100000000000011000000010010111111111111111', 'all', '2025-04-07 00:11:54');
@@ -343,40 +379,66 @@ INSERT INTO `record` VALUES (176086, 3, 11, 1, 4, 1, 12, '1010000111110300322333
 INSERT INTO `record` VALUES (177457, 3, 11, 1, 4, 1, 12, '01010111111000030322233333211211111010332303303333211123332111', '22222222300030010001222222222300000303303223033330010121210010', '11111111111111101001001100011000000110000110011000010001100000000000011000000010000110000000000001100001000000011000000000000110001000011001100001100000011000110010010111111111111111', 'B', '2025-06-01 23:20:26');
 INSERT INTO `record` VALUES (178105, 3, 11, 1, 18, 1, 12, '000011112111000001', '332333332222110000', '11111111111111100000100100011000100000000110000010000001110010000010011110001000000110000000000001100000010001111001000001001110000001000001100000000100011000100100000111111111111111', 'B', '2023-05-22 11:38:54');
 INSERT INTO `record` VALUES (180630, 21, 11, 1, 4, 1, 12, '1011111110000030', '2303221212330303', '11111111111111101001000100011100000000000110100000000011100001001000011001000000000110000011000001100000000010011000010010000111000000000101100000000000111000100010010111111111111111', 'A', '2023-07-07 19:12:19');
+INSERT INTO `record` VALUES (186358, 3, 11, 1, 4, 1, 12, '', '', '11111111111111100000000011011000000100000110000000000001100001110000011000000001110110100000000101101110000000011000001110000110000000000001100000100000011011000000000111111111111111', 'B', '2025-07-13 01:43:12');
+INSERT INTO `record` VALUES (187828, 3, 11, 1, 4, 1, 12, '1', '0', '11111111111111100001100000011010000000000111000000000001100100000010011101100000001110000000000001110000000110111001000000100110000000000011100000000001011000000110000111111111111111', 'B', '2025-08-17 13:11:02');
 INSERT INTO `record` VALUES (196003, 21, 11, 1, 4, 1, 12, '1110000111110033333033223222221111111', '2222230300032230001111222223030003222', '11111111111111100001000000011000110000000110000000000101110000110001011100000000000110010000001001100000000000111010001100001110100000000001100000001100011000000010000111111111111111', 'A', '2023-07-07 19:13:06');
 INSERT INTO `record` VALUES (200148, 9, 11, 1, 4, 1, 12, '00111100033', '22222223000', '11111111111111100000000010011101000100100110000010000001100100000010011001000000000110010000001001100000000010011001000000100110000001000001100100100010111001000000000111111111111111', 'A', '2023-07-14 18:04:11');
+INSERT INTO `record` VALUES (203886, 3, 11, 1, 4, 1, 12, '', '', '11111111111111100000010000011001001000000111010000000001101000000010011101000000010110000000000001101000000010111001000000010110000000001011100000010010011000001000000111111111111111', 'B', '2025-07-13 01:53:09');
+INSERT INTO `record` VALUES (211850, 3, 11, 1, 4, 1, 12, '', '', '11111111111111100000000000011000000000000110100001000011100011100000011010000000100110001100110001100100000001011000000111000111000010000101100000000000011000000000000111111111111111', 'A', '2025-08-17 13:07:38');
 INSERT INTO `record` VALUES (216483, 21, 11, 1, 4, 1, 12, '100101000001111', '230332211212322', '11111111111111100010000000011000001000100110000000100011100001100000011000000010000111010000001011100001000000011000000110000111000100000001100100010000011000000001000111111111111111', 'A', '2023-07-07 19:11:18');
 INSERT INTO `record` VALUES (219730, 21, 11, 1, 4, 1, 12, '00111000100100103333322222221110001031', '22230300322212122122223032300000030003', '11111111111111100000000001011000000000010110010001000001100100010000011001000000001110010011001001110000000010011000001000100110000010001001101000000000011010000000000111111111111111', 'A', '2023-07-07 19:05:33');
+INSERT INTO `record` VALUES (220454, 3, 11, 1, 9, 1, 12, '012', '230', '11111111111111101001000011011000000000000110000000000001110000010000011010000100000111100000000111100000100001011000001000001110000000000001100000000000011011000010010111111111111111', 'all', '2025-07-13 02:01:04');
 INSERT INTO `record` VALUES (222824, 3, 11, 1, 4, 1, 12, '0011111210101000', '2222222230300000', '11111111111111100001010000011010000001000110001000000001100000100000011000000101000110000111100001100010100000011000000100000110000000010001100010000001011000001010000111111111111111', 'A', '2025-03-11 17:53:56');
+INSERT INTO `record` VALUES (227253, 3, 11, 1, 4, 1, 12, '', '', '11111111111111100001100000011100000000000110000000000101100000100000111000001000010110010011001001101000010000011100000100000110100000000001100000000000111000000110000111111111111111', 'B', '2025-07-13 01:34:55');
+INSERT INTO `record` VALUES (231067, 3, 11, 1, 4, 1, 12, '', '', '11111111111111100001000100011000000000000110000001000001100000001000111100000100010110010011001001101000100000111100010000000110000010000001100000000000011000100010000111111111111111', 'B', '2025-07-13 01:47:41');
 INSERT INTO `record` VALUES (237727, 1, 11, 1, 9, 1, 12, '1', '2', '11111111111111110100000000011000010000000110000000000001111000000000011001000100000111001011010011100000100010011000000000011110000000000001100000001000011000000000101111111111111111', 'all', '2023-05-25 11:00:23');
 INSERT INTO `record` VALUES (238512, 3, 11, 1, 4, 1, 12, '0110011101111112322233330000033330111000103333322222221111121212330333233301011', '2230303222221100300103322321221210103030012100333223232232110112100122222230000', '11111111111111100000001000011001000000000110001001000001100111000000111000000010100110000000000001100101000000011100000011100110000010010001100000000010011000010000000111111111111111', 'B', '2025-03-11 23:32:09');
+INSERT INTO `record` VALUES (240508, 3, 11, 1, 4, 1, 12, '001101110011121123332303333001111110001', '222230003222303303230030322122303030010', '11111111111111100001001000011010001001000110000000100001100000000000011100010010000110100000000101100001001000111000000000000110000100000001100010010001011000010010000111111111111111', 'B', '2025-07-08 00:27:55');
 INSERT INTO `record` VALUES (240701, 3, 11, 1, 4, 1, 12, '0122', '2222', '11111111111111100000011000011000001000000110100000000101110000000000011100000000000111010011001011100000000000111000000000001110100000000101100000010000011000011000000111111111111111', 'A', '2025-03-11 17:52:38');
+INSERT INTO `record` VALUES (247579, 3, 11, 1, 4, 1, 12, '01111000012222210011000333322322321111110103', '22303032223000322300332222233230000001122300', '11111111111111100000000001011000010000000110000000001001100100100000111010010001100110000000000001100110001001011100000100100110010000000001100000001000011010000000000111111111111111', 'B', '2025-08-17 13:18:45');
 INSERT INTO `record` VALUES (250782, 3, 11, 1, 4, 1, 12, '1111110010000333033032322111111121232212330000323033232111122303233300', '3332211232303330001112211232230030032223000032222303322111111000001111', '11111111111111100100000000011001000000110111001000000011100000000000011001000000011110000000000001111000000010011000000000000111000000010011101100000010011000000000100111111111111111', 'A', '2025-04-07 00:08:47');
+INSERT INTO `record` VALUES (257041, 3, 11, 1, 4, 1, 12, '0', '3', '11111111111111100100000000011010000001001110000000000001100100000001111000100000100110100000000101100100000100011110000000100110000000000001110010000001011000000000100111111111111111', 'A', '2025-11-12 22:13:08');
 INSERT INTO `record` VALUES (267989, 3, 11, 1, 21, 1, 12, '010101011111223323303000000010111', '223322333330010112112233322110111', '11111111111111101000000000011000000001000110000001000001111000101000011001000000000111000100100011100000000010011000010100011110000010000001100010000000011000000000010111111111111111', 'B', '2023-07-07 19:08:59');
+INSERT INTO `record` VALUES (271161, 3, 11, 1, 9, 1, 12, '', '', '11111111111111100000000000011100000001101110001000100001100010100001011000000000000110010000001001100000000000011010000101000110000100010001110110000000111000000000000111111111111111', 'A', '2025-07-13 02:03:14');
 INSERT INTO `record` VALUES (281161, 3, 11, 1, 4, 1, 12, '1100010111103030033333221111211122232233333301110000011003300332123322221123212', '2303222123230000301112222122223323000003010001112322212222322300300100323001000', '11111111111111100001000000011100010000000110000001100011100100010000111000000000000110100000000101100000000000011100001000100111000110000001100000001000111000000010000111111111111111', 'A', '2023-07-05 16:21:28');
 INSERT INTO `record` VALUES (286139, 3, 11, 1, 21, 1, 12, '', '', '11111111111111100000010001011000000000000110000000001011100000001100111000010000100110100000000101100100001000011100110000000111010000000001100000000000011010001000000111111111111111', 'A', '2023-07-07 19:06:49');
+INSERT INTO `record` VALUES (288680, 3, 11, 1, 4, 1, 12, '', '', '11111111111111100000000000011010010000010111101000010101100000001000011000000000000110000100100001100000000000011000010000000110101000010111101000001001011000000000000111111111111111', 'B', '2025-07-13 14:23:24');
+INSERT INTO `record` VALUES (291832, 3, 11, 1, 4, 1, 12, '', '', '11111111111111100000010000011000000001000110000000000001110110000101011010000000000110100100100101100000000001011010100001101110000000000001100010000000011000001000000111111111111111', 'B', '2025-07-13 01:41:03');
 INSERT INTO `record` VALUES (295171, 3, 11, 1, 4, 1, 12, '11000011111033333', '33221212333333303', '11111111111111100000000100011000000000011111000100000001100000100100011100100000000110010000001001100000000100111000100100000110000000100011111000000000011000100000000111111111111111', 'A', '2023-06-01 13:09:00');
 INSERT INTO `record` VALUES (299531, 21, 11, 1, 4, 1, 12, '111111', '222230', '11111111111111100000100000011000011000000110010000010001100100001000011000000000100111001000010011100100000000011000010000100110001000001001100000011000011000000100000111111111111111', 'A', '2023-07-07 19:06:09');
 INSERT INTO `record` VALUES (299685, 3, 11, 1, 4, 1, 12, '000100011121111030333333301111111011011222', '222223221223030303232300322211101100100012', '11111111111111100000110000011000000000010110000000010101100000000010011100001000100110010000001001100100010000111001000000000110101000000001101000000000011000001100000111111111111111', 'A', '2025-04-07 00:07:57');
 INSERT INTO `record` VALUES (309337, 21, 11, 1, 4, 1, 12, '101110000030000121222103', '322303032222112230333211', '11111111111111100100100010011000000000001110000101000001100000000101011000000000010111000000000011101000000000011010100000000110000010100001110000000000011001000100100111111111111111', 'A', '2023-07-07 19:12:41');
 INSERT INTO `record` VALUES (313751, 3, 11, 1, 8, 1, 12, '00', '22', '11111111111111111000000001011000000000110111000000010001100000000000011010101000000110000000000001100000010101011000000000000110001000000011101100000000011010000000011111111111111111', 'B', '2025-03-11 21:18:10');
+INSERT INTO `record` VALUES (322819, 3, 11, 1, 4, 1, 12, '', '', '11111111111111100000000001011100000001000110000000000101110100001000011001000000000111100000000111100000000010011000010000101110100000000001100010000000111010000000000111111111111111', 'all', '2025-07-13 01:47:30');
 INSERT INTO `record` VALUES (331965, 9, 11, 1, 4, 1, 12, '1110001012', '2230330322', '11111111111111100000010000011000000000000110110010001001100000010010111000000000010110100000000101101000000000011101001000000110010001001101100000000000011000001000000111111111111111', 'A', '2023-07-14 17:48:19');
+INSERT INTO `record` VALUES (349625, 3, 11, 1, 4, 1, 12, '', '', '11111111111111101000000000011000000010100110011000000101110000000001011000000000100110010000001001100100000000011010000000001110100000011001100101000000011000000000010111111111111111', 'all', '2025-07-13 01:47:51');
 INSERT INTO `record` VALUES (365835, 3, 11, 1, 4, 1, 12, '00011111011110003330330032222111222230003330000032232222222211003001211100', '22222222230000000300112222222223330000001000112223212223003222230330000323', '11111111111111110000101000011000001001010110000000110001100001000000011000000010000110000000000001100001000000011000000010000110001100000001101010010000011000010100001111111111111111', 'A', '2025-06-21 19:35:14');
 INSERT INTO `record` VALUES (374713, 21, 11, 1, 4, 1, 12, '100111111100330302', '222230003223032330', '11111111111111100000100010011000000001000111100000000001110001000000011000000001000111000100100011100010000000011000000010001110000000000111100010000000011001000100000111111111111111', 'A', '2023-07-07 19:06:23');
 INSERT INTO `record` VALUES (378441, 3, 11, 1, 21, 1, 12, '10010000103010103323223221100011100323032', '32233333322211110001222233333300111100303', '11111111111111101000010100011000000010101110000000000001100000010001111010000000000110000000000001100000000001011110001000000110000000000001110101000000011000101000010111111111111111', 'B', '2023-07-07 19:10:10');
 INSERT INTO `record` VALUES (383526, 3, 11, 1, 4, 1, 12, '00001100010101112223332222230330011000033212321', '22222230032221122303300330110110010033223003222', '11111111111111100101010000011001000000010110000010000001100001010110011000000000000110000000000001100000000000011001101010000110000001000001101000000010011000001010100111111111111111', 'A', '2023-06-01 13:09:44');
 INSERT INTO `record` VALUES (390924, 21, 11, 1, 3, 1, 12, '2', '2', '11111111111111100001000000011000000001000110010000010001110000010100111000010010000110000000000001100001001000011100101000001110001000001001100010000000011000000010000111111111111111', 'A', '2023-07-07 19:09:20');
+INSERT INTO `record` VALUES (397685, 3, 11, 1, 4, 1, 12, '1', '0', '11111111111111100000000010011000001000001111000001000101100010100000011100000000000111000000000011100000000000111000000101000110100010000011110000010000011001000000000111111111111111', 'B', '2025-08-17 13:08:03');
+INSERT INTO `record` VALUES (404598, 3, 11, 1, 4, 1, 12, '0011111010001100333222221103001121210012222230033212333000003223303332221101212211', '2222222230003222233230032230030003003000121101111111223333323330322300301012111110', '11111111111111110010000000011000000001100110000100000001100000001001011000100000100110000100100001100100000100011010010000000110000000100001100110000000011000000001001111111111111111', 'B', '2025-11-12 21:41:24');
 INSERT INTO `record` VALUES (407161, 3, 11, 1, 4, 1, 12, '100101010100033323221212121233030303000011232211222', '223032222300003222223221110100000032222300322333222', '11111111111111100000000010011110100000000110000000000001100011010000111001100000000110000000000001100000000110011100001011000110000000000001100000000101111001000000000111111111111111', 'A', '2023-07-14 15:31:13');
 INSERT INTO `record` VALUES (414626, 3, 11, 1, 21, 1, 12, '0001000112221223303000000001111', '2233333322222221000000032300111', '11111111111111110000100000011001000000010110010000000001110010000000011000000010100110010000001001100101000000011000000001001110000000001001101000000010011000000100001111111111111111', 'A', '2023-07-07 19:08:05');
 INSERT INTO `record` VALUES (427759, 3, 11, 1, 4, 1, 12, '110010101111030000322223222230000010000333222122222223000000322300', '322300322212212232223032300001100000011223221123223223230030000000', '11111111111111100000010000011000000000001111101000000001110001000001111100000000000110000000000001100000000000111110000010001110000000010111110000000000011000001000000111111111111111', 'A', '2025-04-07 00:01:25');
+INSERT INTO `record` VALUES (428135, 3, 11, 1, 4, 1, 12, '', '', '11111111111111100000010011011000010000000110000000001001100000000000011001000001000110110100101101100010000010011000000000000110010000000001100000001000011011001000000111111111111111', 'B', '2025-07-13 01:33:37');
 INSERT INTO `record` VALUES (434765, 21, 11, 1, 4, 1, 12, '101111100000103322223322111112101', '230323221221221222300303032300010', '11111111111111100000100100011000000000000110000100101111100000000000011000000000010111001000010011101000000000011000000000000111110100100001100000000000011000100100000111111111111111', 'A', '2023-07-07 19:06:00');
+INSERT INTO `record` VALUES (439253, 3, 11, 1, 4, 1, 12, '', '', '11111111111111100100000000011000000010000110100000001001101000000000011001010011000110010000001001100011001010011000000000010110010000000101100001000000011000000000100111111111111111', 'B', '2025-07-13 01:49:16');
 INSERT INTO `record` VALUES (444148, 3, 11, 1, 4, 1, 12, '01101000001012221221212123303030030', '23032230032232211222121010000322300', '11111111111111101000100000011000000000000111000000000111100000001010011011010000000110000000000001100000001011011001010000000111100000000011100000000000011000000100010111111111111111', 'B', '2023-05-29 08:24:17');
 INSERT INTO `record` VALUES (455243, 3, 11, 1, 4, 1, 12, '111100011000000303333222221221101222323333001030100', '222230322121223212333032300000000010111122223003030', '11111111111111100000010000011001000000010110001100010001100000000000011000010001000111000100100011100010001000011000000000000110001000110001101000000010011000001000000111111111111111', 'B', '2025-04-07 00:05:58');
 INSERT INTO `record` VALUES (462093, 21, 11, 1, 4, 1, 12, '110001110300011033322222233300000101010112233222222111110300001', '222222233030000322222123323000300011011100112222222323003000121', '11111111111111100000010000011000010011000111000000000001100000000001011010001000000110010011001001100000010001011010000000000110000000000011100011001000011000001000000111111111111111', 'A', '2023-07-07 19:12:02');
 INSERT INTO `record` VALUES (466387, 3, 11, 1, 18, 1, 12, '0', '1', '11111111111111110000010000011001000000100110000110010001110001000000011000000000000110001000010001100000000000011000000010001110001001100001100100000010011000001000001111111111111111', 'B', '2023-05-22 11:38:13');
+INSERT INTO `record` VALUES (466986, 3, 11, 1, 4, 1, 12, '', '', '11111111111111110000000000011000000100000110010000100101101110000000011000001001000110000000000001100010010000011000000001110110100100001001100000100000011000000000001111111111111111', 'all', '2025-08-17 12:54:41');
 INSERT INTO `record` VALUES (473894, 21, 11, 1, 4, 1, 12, '1', '2', '11111111111111101000000001011010000000000110000000010001101000101000111000000000000110011000011001100000000000011100010100010110001000000001100000000001011010000000010111111111111111', 'A', '2023-07-07 19:12:46');
 INSERT INTO `record` VALUES (490395, 3, 11, 1, 4, 1, 12, '0011011111001003300032222122222230000030003333211233211121232321', '2222222230000300112222223303300011030111222332112230323030000300', '11111111111111100001000001011011100001010110000000100001100000000001011000100000000110000000000001100000000100011010000000000110000100000001101010000111011010000010000111111111111111', 'A', '2023-07-09 18:33:08');
 INSERT INTO `record` VALUES (493626, 3, 11, 1, 4, 1, 12, '001121100000012101', '222222230033003222', '11111111111111100000000000011010100100000111000101010001100000000001011000000000100110000011000001100100000000011010000000000110001010100011100000100101011000000000000111111111111111', 'A', '2025-04-07 00:10:00');
+INSERT INTO `record` VALUES (493627, 22, 11, 1, 4, 1, 12, '', '', '11111111111111100100000000011011001010100110000000010001100001000000011001000000000110000011000001100000000010011000000010000110001000000001100101010011011000000000100111111111111111', 'A', '2026-08-27 02:04:57');
+INSERT INTO `record` VALUES (493628, 3, 11, 1, 4, 1, 12, '001112100001110000332322322122212330301030330011111233212221123330303300', '222222230003000322221232322321101110000000330303222221223221121010030001', '11111111111111100000000011011000000000010110101001000001100100100001011000000100000110000000000001100000100000011010000100100110000010010101101000000000011011000000000111111111111111', 'A', '2026-08-27 02:09:09');
+INSERT INTO `record` VALUES (493629, 22, 11, 1, 4, 1, 12, '', '', '11111111111111100001110000011000000100000110100000000001100100100000111000000000000110001100110001100000000000011100000100100110000000000101100000100000011000001110000111111111111111', 'A', '2026-08-27 02:32:41');
+INSERT INTO `record` VALUES (493630, 3, 11, 1, 4, 1, 12, '11010100101003322323221122333301000011010', '22300322223321222232330001210000032232300', '11111111111111100010000000011000000000000111010000000001101100000100111101001000000110000000000001100000010010111100100000110110000000001011100000000000011000000001000111111111111111', 'B', '2026-08-27 02:47:12');
+INSERT INTO `record` VALUES (493631, 3, 11, 1, 4, 1, 12, '0', '3', '11111111111111100000000010011011000000001111000001010001100000000101011000010000000110000000000001100000001000011010100000000110001010000011110000000011011001000000000111111111111111', 'A', '2026-08-31 18:02:57');
+INSERT INTO `record` VALUES (493632, 3, 11, 1, 4, 1, 12, '11100011000122122332300301100100', '33230322121232221112223301033230', '11111111111111100011000000011000001000010110000000001111100000000000011010000000000110010100101001100000000001011000000000000111110000000001101000010000011000000011000111111111111111', 'B', '2026-08-31 18:03:22');
 
 -- ----------------------------
 -- Table structure for user
@@ -390,24 +452,25 @@ CREATE TABLE `user`  (
   `rating` int NULL DEFAULT 1500,
   `times` int NULL DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 21 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 23 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of user
 -- ----------------------------
-INSERT INTO `user` VALUES (1, 'y1', '$2a$10$Naz79w.nio0t4IT0d8QrUuAOHx9BKhC5EzBguA/Uxgq9Qon3Rwp6W', 'https://king-of-bot.oss-cn-shanghai.aliyuncs.com/yxc.jpg?Expires=1743955777&OSSAccessKeyId=TMP.3KoBDQBBRCmpC2KqzmUhcnu65LSeirk1TQsp3eCYWgnXLsn52YpRXmUZu7YriBLGypwu5LxjVC4dH4bddsbyXf7iPJxSc2&Signature=w2Vq2Ey765HZzWvWk%2FzZ77EgW9s%3D', 1550, 62);
-INSERT INTO `user` VALUES (2, 'yxc', '$2a$10$niR9B/ikD.WWZkv9yuhjqOcIh6f36knwNk8MLuBSweSZUwZmIIas6', 'https://king-of-bot.oss-cn-shanghai.aliyuncs.com/yxc.jpg?Expires=1743955777&OSSAccessKeyId=TMP.3KoBDQBBRCmpC2KqzmUhcnu65LSeirk1TQsp3eCYWgnXLsn52YpRXmUZu7YriBLGypwu5LxjVC4dH4bddsbyXf7iPJxSc2&Signature=w2Vq2Ey765HZzWvWk%2FzZ77EgW9s%3D', 1553, 23);
-INSERT INTO `user` VALUES (3, 'cly', '$2a$10$Hvb5pSHxweXusDovi4LvGOdewZ.PFJ0WT7IhGXRv2.PpdL/vX8caG', 'https://cdn.acwing.com/media/user/profile/photo/86034_lg_a0ae539ee2.jpg', 1664, 87);
-INSERT INTO `user` VALUES (4, '无敌的bot', '$2a$10$XPJ2QfsW5U6y2QE08fBdOun.WmbmBmQ/H9QChh6RzINEWTdlJw7VO', 'https://cdn.acwing.com/media/article/image/2022/07/07/1_d7f3b93efd-kob.png', 1939, 147);
+INSERT INTO `user` VALUES (1, 'y1', '$2a$10$Naz79w.nio0t4IT0d8QrUuAOHx9BKhC5EzBguA/Uxgq9Qon3Rwp6W', 'https://cdn.acwing.com/media/user/profile/photo/1_lg_31701288b0.jpg', 1550, 62);
+INSERT INTO `user` VALUES (2, 'yxc', '$2a$10$niR9B/ikD.WWZkv9yuhjqOcIh6f36knwNk8MLuBSweSZUwZmIIas6', 'https://cdn.acwing.com/media/user/profile/photo/1_lg_31701288b0.jpg', 1553, 23);
+INSERT INTO `user` VALUES (3, 'cly', '$2a$10$Hvb5pSHxweXusDovi4LvGOdewZ.PFJ0WT7IhGXRv2.PpdL/vX8caG', 'https://cdn.acwing.com/media/user/profile/photo/86034_lg_a0ae539ee2.jpg', 1740, 116);
+INSERT INTO `user` VALUES (4, '无敌的bot', '$2a$10$XPJ2QfsW5U6y2QE08fBdOun.WmbmBmQ/H9QChh6RzINEWTdlJw7VO', 'https://cdn.acwing.com/media/article/image/2022/07/07/1_d7f3b93efd-kob.png', 1940, 174);
 INSERT INTO `user` VALUES (6, 'wg', '$2a$10$RlpHyA2Xl9wKaPhdVbCLzum41CK6/CUMFoXgQDvN03ES4clP.g8p.', 'https://cdn.acwing.com/media/user/profile/photo/226809_lg_2fcfb9ed3a.jpg', 1500, 43);
 INSERT INTO `user` VALUES (7, 'fusong', '$2a$10$yOT2E29yE4eoyGtfnPZJjOzEEZxpOkIFlAn7sGAVzh184MIJo2pYK', 'https://cdn.acwing.com/media/user/profile/photo/229336_lg_2fb5c2d53f.jpg', 1510, 22);
 INSERT INTO `user` VALUES (8, 'spx', '$2a$10$S/RkD8y1p1o6ZJ4cDq1hMuVNVFXxxHJjrVuNE6.5HqOicrc1JUH9i', 'https://cdn.acwing.com/media/user/profile/photo/228025_lg_a6ae437e3c.jpg', 1515, 55);
-INSERT INTO `user` VALUES (9, 'Tom', '$2a$10$2F3miBnUwXV2wRZLZ1HUNuqG1uBUi6MK8xKDOHX/VYu/UHhXIj1Te', 'https://cdn.acwing.com/media/user/profile/photo/71127_lg_5c719f083a.png', 1570, 67);
+INSERT INTO `user` VALUES (9, 'Tom', '$2a$10$2F3miBnUwXV2wRZLZ1HUNuqG1uBUi6MK8xKDOHX/VYu/UHhXIj1Te', 'https://cdn.acwing.com/media/user/profile/photo/71127_lg_5c719f083a.png', 1578, 71);
 INSERT INTO `user` VALUES (10, 'zhz', '$2a$10$X.XHKsgcDUZbdkx/i4ThVeJcaW8vhJ3fqtd/7U4oSPjW6qNjFdpzq', 'https://cdn.acwing.com/media/user/profile/photo/86034_lg_a0ae539ee2.jpg', 1500, 0);
 INSERT INTO `user` VALUES (11, 'zga', '$2a$10$H5y00jiLnx1FhjtOJh6a3.FGAHz6mv2vuIwh24ZE1ttPEFtLyT/Pi', 'https://cdn.acwing.com/media/user/profile/photo/227026_lg_cc3d108c3b.jpg', 1505, 1);
 INSERT INTO `user` VALUES (12, 'fxc', '$2a$10$erFEKj8a92aAHUM1C9NyV.411XGItP/xrYtiQPm/56/vd8nnGjdL6', 'https://cdn.acwing.com/media/user/profile/photo/229347_lg_c9ee662f3f.jpg', 1500, 0);
 INSERT INTO `user` VALUES (13, 'LL', '$2a$10$GbM3nyRimT75Bw6WhXvV2uQk.WLW8JmT7kM8tFrWMV5Ul1fJdZ7Li', 'https://cdn.acwing.com/media/user/profile/photo/117186_lg_50f6424a16.jpg', 1491, 9);
 INSERT INTO `user` VALUES (18, '水深00安东尼', '$2a$10$LiuTMl6hdv3gwq46wTuCPeDdSn2nBCZ9ay.WhLf5YfFXL4t44tEsS', 'https://cdn.acwing.com/media/user/profile/photo/99975_lg_3b5ebf6ac9.jpg', 1488, 6);
 INSERT INTO `user` VALUES (21, 'AE_12', '$2a$10$1G0hBrQNmxoSs4Aq/Ay42.hnzymM7pl9H1iMnDfWX6r8k.mrCm.1W', 'https://cdn.acwing.com/media/user/profile/photo/145202_lg_6ee19aca2b.jpg', 1482, 16);
+INSERT INTO `user` VALUES (22, 'testbot', '$2a$10$WgelUQyZIMpvOlNCeGMqD.lGc0rkT8F2CbqdS5oWMAT2ev1pB0XKC', 'https://cdn.acwing.com/media/user/profile/photo/117187_lg_64c833341e.jpg', 1496, 2);
 
 SET FOREIGN_KEY_CHECKS = 1;
