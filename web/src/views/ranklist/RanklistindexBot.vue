@@ -28,21 +28,16 @@
 
 <script setup>
 import ContentField from '../../components/ContentField.vue'
-import { useStore } from 'vuex';
 import router from "../../router/index"
-import $ from 'jquery';
+import { ajax } from '../../utils/requests'
 import { onMounted, ref } from 'vue';
 
-const store = useStore();
 let bots = ref([])
 
 const pull_bot = () => {
-    $.ajax({
-        url: "http://127.0.0.1:3000/api/user/bot/getlist/alluser/",
+    ajax({
+        url: "/api/user/bot/getlist/alluser/",
         type: "get",
-        headers: {
-            Authorization: "Bearer " + store.state.user.token,
-        },
         success(resp) {
             bots.value = resp.bot
         }

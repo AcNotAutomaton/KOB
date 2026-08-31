@@ -123,8 +123,7 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import $ from 'jquery'
-import { useStore } from 'vuex'
+import { ajax } from '../../../utils/requests'
 import { Modal } from 'bootstrap/dist/js/bootstrap'
 import { VAceEditor } from 'vue3-ace-editor';
 import ace from 'ace-builds';
@@ -135,7 +134,6 @@ ace.config.set(
     "https://cdn.jsdelivr.net/npm/ace-builds@" + require('ace-builds').version + "/src-noconflict/"
 );
 
-const store = useStore();
 const bots = ref([]);
 
 const botadd = reactive({
@@ -151,12 +149,9 @@ onMounted(() => {
 });
 
 const refresh_bots = () => {
-    $.ajax({
-        url: "http://127.0.0.1:3000/api/user/bot/getlist/",
+    ajax({
+        url: "/api/user/bot/getlist/",
         type: "get",
-        headers: {
-            Authorization: "Bearer " + store.state.user.token,
-        },
         success(resp) {
             bots.value = resp;
         }
@@ -165,16 +160,13 @@ const refresh_bots = () => {
 
 const add_bot = () => {
     botadd.error_message = "";
-    $.ajax({
-        url: "http://127.0.0.1:3000/api/user/bot/add/",
+    ajax({
+        url: "/api/user/bot/add/",
         type: "post",
         data: {
             title: botadd.title,
             description: botadd.description,
             content: botadd.content,
-        },
-        headers: {
-            Authorization: "Bearer " + store.state.user.token,
         },
         success(resp) {
             if (resp.error_message === "success") {
@@ -192,17 +184,14 @@ const add_bot = () => {
 
 const update_bot = (bot) => {
     botadd.error_message = "";
-    $.ajax({
-        url: "http://127.0.0.1:3000/api/user/bot/update/",
+    ajax({
+        url: "/api/user/bot/update/",
         type: "post",
         data: {
             bot_id: bot.id,
             title: bot.title,
             description: bot.description,
             content: bot.content,
-        },
-        headers: {
-            Authorization: "Bearer " + store.state.user.token,
         },
         success(resp) {
             if (resp.error_message === "success") {
@@ -216,14 +205,11 @@ const update_bot = (bot) => {
 };
 
 const remove_bot = (bot) => {
-    $.ajax({
-        url: "http://127.0.0.1:3000/api/user/bot/remove/",
+    ajax({
+        url: "/api/user/bot/remove/",
         type: "post",
         data: {
             bot_id: bot.id,
-        },
-        headers: {
-            Authorization: "Bearer " + store.state.user.token,
         },
         success(resp) {
             if (resp.error_message === "success") {

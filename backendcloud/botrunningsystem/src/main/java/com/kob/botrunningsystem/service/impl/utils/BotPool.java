@@ -1,47 +1,56 @@
 package com.kob.botrunningsystem.service.impl.utils;
 
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
+import jakarta.annotation.PreDestroy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
-public class BotPool extends Thread {
-    private final ReentrantLock lock = new ReentrantLock();
-    private final Condition condition = lock.newCondition();
-    private final Queue<Bot> bots = new LinkedList<>();
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * Bot 执行池：由 Spring 管理（@Component），不再手动 new。
+ * 每个 Bot 的沙箱执行提交到固定线程池，单次失败或超时不影响其他任务。
+ */
+@Component
+public class BotPool {
+    private static final Logger log = LoggerFactory.getLogger(BotPool.class);
+    private static final int POOL_SIZE = 4;
+
+    private final ExecutorService executor = Executors.newFixedThreadPool(POOL_SIZE, runnable -> {
+        Thread t = new Thread(runnable, "bot-runner");
+        t.setDaemon(true);
+        return t;
+    });
+
+    private final RestTemplate restTemplate;
+
+    @Autowired
+    public BotPool(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
 
     public void addBot(Integer userId, String botCode, String input, Integer enemy) {
-        lock.lock();
-        try {
-            bots.add(new Bot(userId, botCode, input, enemy));
-            condition.signalAll();
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    private void consume(Bot bot) {
-        Consumer consumer = new Consumer();
-        consumer.startTimeout(2000, bot);
-    }
-
-    @Override
-    public void run() {
-        while (true) {
-            lock.lock();
-            if (bots.isEmpty()) {
-                try {
-                    condition.await();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                    lock.unlock();
-                    break;
-                }
-            } else {
-                Bot bot = bots.remove();
-                lock.unlock();
-                consume(bot);  // 比较耗时，可能会执行几秒钟
+        Bot bot = new Bot(userId, botCode, input, enemy);
+        executor.submit(() -> {
+            try {
+                new Consumer(restTemplate).consume(bot);
+            } catch (Exception e) {
+                log.error("Bot 任务执行异常，userId={}", userId, e);
             }
+        });
+    }
+
+    @PreDestroy
+    public void shutdown() {
+        executor.shutdownNow();
+        try {
+            executor.awaitTermination(3, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 }

@@ -42,9 +42,10 @@ import ContentField from '../../components/ContentField.vue'
 import { useStore } from 'vuex';
 import { ref } from 'vue';
 import router from "../../router/index"
-import $ from 'jquery';
+import { ajax } from '../../utils/requests'
 
 const store = useStore();
+void store;
 let users = ref([]);
 let current_page = 1;
 let total_users = 0;
@@ -76,15 +77,12 @@ const udpate_pages = () => {
 
 const pull_page = page => {
     current_page = page;
-    $.ajax({
-        url: "http://127.0.0.1:3000/api/ranklist/getlist/",
+    ajax({
+        url: "/api/ranklist/getlist/",
         data: {
             page,
         },
         type: "get",
-        headers: {
-            Authorization: "Bearer " + store.state.user.token,
-        },
         success(resp) {
             users.value = resp.users;
             total_users = resp.users_count;

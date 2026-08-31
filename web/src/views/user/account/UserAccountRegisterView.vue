@@ -28,7 +28,7 @@
 import ContentField from '../../../components/ContentField.vue'
 import { ref } from 'vue'
 import router from '../../../router/index'
-import $ from 'jquery'
+import { ajax } from '../../../utils/requests'
 
 let username = ref('');
 let password = ref('');
@@ -36,8 +36,8 @@ let confirmedPassword = ref('');
 let error_message = ref('');
 
 const register = () => {
-    $.ajax({
-        url: "http://127.0.0.1:3000/api/user/account/register/",
+    ajax({
+        url: "/api/user/account/register/",
         type: "post",
         data: {
             username: username.value,

@@ -1,4 +1,4 @@
-import $ from 'jquery'
+import { ajax } from '../utils/requests'
 
 export default {
     state: {
@@ -34,8 +34,8 @@ export default {
     },
     actions: {
         login(context, data) {
-            $.ajax({
-                url: "http://127.0.0.1:3000/api/user/account/token/",
+            ajax({
+                url: "/api/user/account/token/",
                 type: "post",
                 data: {
                     username: data.username,
@@ -56,12 +56,9 @@ export default {
             });
         },
         getinfo(context, data) {
-            $.ajax({
-                url: "http://127.0.0.1:3000/api/user/account/info/",
+            ajax({
+                url: "/api/user/account/info/",
                 type: "get",
-                headers: {
-                    Authorization: "Bearer " + context.state.token,
-                },
                 success(resp) {
                     if (resp.error_message === "success") {
                         context.commit("updateUser", {

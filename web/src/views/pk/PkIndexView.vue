@@ -18,9 +18,10 @@ import MatchGround from '../../components/MatchGround.vue'
 import ResultBoard from '../../components/ResultBoard.vue'
 import { onMounted, onUnmounted } from 'vue'
 import { useStore } from 'vuex'
+import { websocketUrl } from '../../utils/requests'
 
 const store = useStore();
-const socketUrl = `ws://127.0.0.1:3000/websocket/${store.state.user.token}/`;
+const socketUrl = websocketUrl();
 
 store.commit("updateLoser", "none");
 store.commit("updateIsRecord", false);
