@@ -23,11 +23,8 @@ public class MatchingPool extends Thread {
 
     private static final Logger log = LoggerFactory.getLogger(MatchingPool.class);
 
-    // ===== 前端与匹配系统的 botId 编码约定 =====
-    /** -1：亲自出马；-2：本人 VS AI；botId*1000+666（如 10666）：指定 Bot VS AI */
+    /** -1：亲自出马；正整数始终为真实 Bot ID，匹配模式单独传递。 */
     public static final int PLAY_MYSELF = -1;
-    public static final int PLAY_VS_AI = -2;
-    public static final int BOT_VS_AI_CODE = 666;
 
     // ===== AI 对手（人机对战）固定使用 user 4 / bot 3 =====
     private static final int AI_USER_ID = 4;
@@ -52,34 +49,31 @@ public class MatchingPool extends Thread {
         this.start();
     }
 
-    public void addPlayer(Integer userId, Integer rating, Integer botId) {
-        if (botId != null && botId > BOT_VS_AI_CODE) {
-            // 指定 Bot VS AI：前端编码为 botId*1000+666，还原真实 botId
-            int realBotId = botId / 1000;
-            sendResult(new Player(userId, rating, realBotId, 10),
-                    new Player(AI_USER_ID, AI_RATING, AI_BOT_ID, 10));
-            return;
+    public void addPlayer(Integer userId, Integer rating, Integer botId, String mode, String matchId) {
+        if (botId == null || botId != PLAY_MYSELF && botId <= 0 || matchId == null || matchId.isBlank()
+                || !"pvp".equals(mode) && !"ai".equals(mode)) {
+            throw new IllegalArgumentException("Invalid matching request");
         }
-        if (botId != null && botId == PLAY_VS_AI) {
-            // 本人 VS AI
-            sendResult(new Player(userId, rating, PLAY_VS_AI, 10),
-                    new Player(AI_USER_ID, AI_RATING, AI_BOT_ID, 10));
+        if ("ai".equals(mode)) {
+            sendResult(new Player(userId, rating, botId, 10, matchId),
+                    new Player(AI_USER_ID, AI_RATING, AI_BOT_ID, 10, null));
             return;
         }
 
         lock.lock();
         try {
-            players.removeIf(player -> player.getUserId().equals(userId));
-            players.add(new Player(userId, rating, botId, 0));
+            // 旧连接迟到的 add 不能替换新连接的预约；后端在开局时核对有效预约。
+            players.removeIf(player -> player.getUserId().equals(userId) && player.getMatchId().equals(matchId));
+            players.add(new Player(userId, rating, botId, 0, matchId));
         } finally {
             lock.unlock();
         }
     }
 
-    public void removePlayer(Integer userId) {
+    public void removePlayer(Integer userId, String matchId) {
         lock.lock();
         try {
-            players.removeIf(player -> player.getUserId().equals(userId));
+            players.removeIf(player -> player.getUserId().equals(userId) && player.getMatchId().equals(matchId));
         } finally {
             lock.unlock();
         }
@@ -103,6 +97,8 @@ public class MatchingPool extends Thread {
         data.add("a_bot_id", a.getBotId().toString());
         data.add("b_id", b.getUserId().toString());
         data.add("b_bot_id", b.getBotId().toString());
+        data.add("a_match_id", a.getMatchId());
+        if (b.getMatchId() != null) data.add("b_match_id", b.getMatchId());
         restTemplate.postForObject(startGameUrl, data, String.class);
     }
 
@@ -113,6 +109,7 @@ public class MatchingPool extends Thread {
             for (int j = i + 1; j < players.size(); j++) {
                 if (used[j]) continue;
                 Player a = players.get(i), b = players.get(j);
+                if (a.getUserId().equals(b.getUserId())) continue;
                 if (checkMatched(a, b)) {
                     used[i] = used[j] = true;
                     sendResult(a, b);

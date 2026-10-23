@@ -12,4 +12,6 @@ public class Bot {
     String botCode;
     String input;
     Integer enemy;
+    String gameId;
+    Integer round;
 }

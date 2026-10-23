@@ -32,31 +32,35 @@
 
 <script setup>
 import { GameMap } from "@/assets/scripts/GameMap";
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useStore } from "vuex";
 import router from "@/router";
 
 const store = useStore();
 let parent = ref(null);
 let canvas = ref(null);
+let game = null;
+
+const createGame = () => {
+    game?.destroy();
+    game = new GameMap(canvas.value.getContext('2d'), parent.value, store);
+    store.commit("updateGameObject", game);
+};
 
 const again = () => {
     store.commit("updateProgress", 0)
-    store.commit(
-        "updateGameObject",
-        new GameMap(canvas.value.getContext('2d'), parent.value, store)
-    );
+    createGame();
 }
 
 const goback = () => {
     router.go(-1)
 }
 
-onMounted(() => {
-    store.commit(
-        "updateGameObject",
-        new GameMap(canvas.value.getContext('2d'), parent.value, store)
-    );
+onMounted(createGame);
+onUnmounted(() => {
+    game?.destroy();
+    if (store.state.pk.gameObject === game) store.commit("updateGameObject", null);
+    game = null;
 });
 </script>
 

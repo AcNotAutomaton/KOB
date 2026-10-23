@@ -19,12 +19,13 @@ public class MatchingController {
         Integer userId = Integer.parseInt(Objects.requireNonNull(data.getFirst("user_id")));
         Integer rating = Integer.parseInt(Objects.requireNonNull(data.getFirst("rating")));
         Integer botId = Integer.parseInt(Objects.requireNonNull(data.getFirst("bot_id")));
-        return matchingService.addPlayer(userId, rating, botId);
+        return matchingService.addPlayer(userId, rating, botId,
+                Objects.requireNonNull(data.getFirst("mode")), Objects.requireNonNull(data.getFirst("match_id")));
     }
 
     @PostMapping("/player/remove/")
     public String removePlayer(@RequestParam MultiValueMap<String, String> data) {
         Integer userId = Integer.parseInt(Objects.requireNonNull(data.getFirst("user_id")));
-        return matchingService.removePlayer(userId);
+        return matchingService.removePlayer(userId, Objects.requireNonNull(data.getFirst("match_id")));
     }
 }

@@ -11,8 +11,8 @@ public class BotRunningServiceImpl implements BotRunningService {
     private BotPool botPool;
 
     @Override
-    public String addBot(Integer userId, String botCode, String input, Integer enemy) {
-        botPool.addBot(userId, botCode, input, enemy);
+    public String addBot(Integer userId, String botCode, String input, Integer enemy, String gameId, Integer round) {
+        botPool.addBot(userId, botCode, input, enemy, gameId, round);
         return "add bot success";
     }
 }

@@ -1,6 +1,8 @@
 package com.kob.botrunningsystem.controller;
 
 import com.kob.botrunningsystem.service.BotRunningService;
+import com.kob.botrunningsystem.service.impl.utils.ContainerSandbox;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,6 +15,13 @@ import java.util.Objects;
 public class BotRunningController {
     @Autowired
     private BotRunningService botRunningService;
+    @Autowired
+    private ContainerSandbox sandbox;
+
+    @GetMapping("/bot/health/")
+    public boolean health() {
+        return sandbox.available();
+    }
 
     @PostMapping("/bot/add/")
     public String addBot(@RequestParam MultiValueMap<String, String> data) {
@@ -20,6 +29,8 @@ public class BotRunningController {
         String botCode = data.getFirst("bot_code");
         String input = data.getFirst("input");
         Integer enemy = Integer.parseInt(data.getFirst("enemy_id"));
-        return botRunningService.addBot(userId, botCode, input, enemy);
+        return botRunningService.addBot(userId, botCode, input, enemy,
+                Objects.requireNonNull(data.getFirst("game_id")),
+                Integer.valueOf(Objects.requireNonNull(data.getFirst("round"))));
     }
 }

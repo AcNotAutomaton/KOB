@@ -1,15 +1,15 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeIndexView from '../views/home/HomeIndexView'
-import PkIndexView from '../views/pk/PkIndexView'
-import RecordIndexView from '../views/record/RecordIndexView'
-import RecordContentView from '../views/record/RecordContentView'
-import RanklistIndexView from '../views/ranklist/RanklistIndexView'
-import RanklistIndexBot from '../views/ranklist/RanklistindexBot'
-import UserBotIndexView from '../views/user/bot/UserBotIndexView'
-import NotFound from '../views/error/NotFound'
-import UserAccountLoginView from '../views/user/account/UserAccountLoginView'
-import UserAccountRegisterView from '../views/user/account/UserAccountRegisterView'
-import UserMainView from '@/views/user/account/UserMainView'
+const HomeIndexView = () => import('../views/home/HomeIndexView.vue')
+const PkIndexView = () => import('../views/pk/PkIndexView.vue')
+const RecordIndexView = () => import('../views/record/RecordIndexView.vue')
+const RecordContentView = () => import('../views/record/RecordContentView.vue')
+const RanklistIndexView = () => import('../views/ranklist/RanklistIndexView.vue')
+const RanklistIndexBot = () => import('../views/ranklist/RanklistindexBot.vue')
+const UserBotIndexView = () => import('../views/user/bot/UserBotIndexView.vue')
+const NotFound = () => import('../views/error/NotFound.vue')
+const UserAccountLoginView = () => import('../views/user/account/UserAccountLoginView.vue')
+const UserAccountRegisterView = () => import('../views/user/account/UserAccountRegisterView.vue')
+const UserMainView = () => import('../views/user/account/UserMainView.vue')
 
 import store from '../store/index'
 
@@ -114,12 +114,12 @@ const router = createRouter({
   routes
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async to => {
+  if (store.state.user.pulling_info) await store.dispatch("restoreLogin");
   if (to.meta.requestAuth && !store.state.user.is_login) {
-    next({ name: "user_account_login" });
-  } else {
-    next();
+    return { name: "user_account_login", query: { redirect: to.fullPath }, replace: true };
   }
+  if (to.name === "user_account_login" && store.state.user.is_login) return { name: "home_index" };
 })
 
 export default router

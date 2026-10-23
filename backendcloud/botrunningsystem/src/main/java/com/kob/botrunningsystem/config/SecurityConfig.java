@@ -16,7 +16,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable).sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)).authorizeHttpRequests(auth -> auth
-            .requestMatchers("/bot/add/")
+            .requestMatchers("/bot/add/", "/bot/health/")
                 .access(new WebExpressionAuthorizationManager("hasIpAddress('127.0.0.1')"))
             .requestMatchers(HttpMethod.OPTIONS).permitAll()
             .anyRequest().authenticated());

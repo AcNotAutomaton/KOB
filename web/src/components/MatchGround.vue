@@ -11,14 +11,14 @@
             </div>
             <div class="col-4">
                 <div class="user-select-bot">
-                    <select v-model="select_bot" class="form-select" aria-label="Default select example">
-                        <option value="-1" selected>亲自出马</option>
-                        <option v-for="bot in bots" :key="bot.id" :value="bot.id">
+                    <select v-model="select_bot" :disabled="$store.state.pk.matching" class="form-select" aria-label="选择对战方式">
+                        <option value="pvp:-1">亲自出马</option>
+                        <option v-for="bot in bots" :key="'pvp:' + bot.id" :value="'pvp:' + bot.id">
                             {{ bot.title }}
                         </option>
-                        <option value="-666" disabled>下面是bot和AI玩</option>
-                        <option value="-2" selected>本人 VS AI</option>
-                        <option v-for="bot in bots" :key="bot.id" :value="bot.id + '666'">
+                        <option disabled>下面是bot和AI玩</option>
+                        <option value="ai:-1">本人 VS AI</option>
+                        <option v-for="bot in bots" :key="'ai:' + bot.id" :value="'ai:' + bot.id">
                             {{ bot.title }} VS AI
                         </option>
                     </select>
@@ -33,8 +33,8 @@
                 </div>
             </div>
             <div class="col-12" style="text-align: center; padding-top: 15vh;">
-                <button @click="click_match_btn" type="button" class="btn btn-warning btn-lg">{{ match_btn_info
-                }}</button>
+                <button @click="click_match_btn" :disabled="$store.state.pk.socket?.readyState !== 1" type="button" class="btn btn-warning btn-lg">{{ $store.state.pk.matching ? '取消' : '开始匹配' }}</button>
+                <p v-if="$store.state.pk.match_error" class="text-warning mt-3">{{ $store.state.pk.match_error }}</p>
             </div>
         </div>
     </div>
@@ -46,21 +46,24 @@ import { useStore } from 'vuex';
 import { ajax } from '../utils/requests'
 
 const store = useStore();
-let match_btn_info = ref("开始匹配");
 let bots = ref([]);
-let select_bot = ref("-1");
+let select_bot = ref("pvp:-1");
 
 const click_match_btn = () => {
-    console.log(select_bot.value)
-    if (match_btn_info.value === "开始匹配") {
-        match_btn_info.value = "取消";
-        store.state.pk.socket.send(JSON.stringify({
+    const socket = store.state.pk.socket;
+    if (socket?.readyState !== 1) return;
+    store.commit("updateMatchError", "");
+    if (!store.state.pk.matching) {
+        const [mode, botId] = select_bot.value.split(":");
+        store.commit("updateMatching", true);
+        socket.send(JSON.stringify({
             event: "start-matching",
-            bot_id: select_bot.value,
+            bot_id: Number(botId),
+            mode,
         }));
     } else {
-        match_btn_info.value = "开始匹配";
-        store.state.pk.socket.send(JSON.stringify({
+        store.commit("updateMatching", false);
+        socket.send(JSON.stringify({
             event: "stop-matching",
         }));
     }

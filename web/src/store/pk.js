@@ -1,7 +1,15 @@
+import { markRaw } from 'vue';
+
 export default {
     state: {
         status: "matching",  // matching表示匹配界面，playing表示对战界面
         socket: null,
+        matching: false,
+        match_error: "",
+        game_id: "",
+        round: 0,
+        a_steps: "",
+        b_steps: "",
         opponent_username: "",
         opponent_photo: "",
         a_id: 0,
@@ -17,7 +25,16 @@ export default {
     },
     mutations: {
         updateSocket(state, socket) {
-            state.socket = socket;
+            state.socket = socket ? markRaw(socket) : null;
+        },
+        updateMatching(state, matching) {
+            state.matching = matching;
+        },
+        updateMatchError(state, error) {
+            state.match_error = error;
+        },
+        updateRound(state, round) {
+            state.round = round;
         },
         updateOpponent(state, opponent) {
             state.opponent_username = opponent.username;
@@ -27,6 +44,10 @@ export default {
             state.status = status;
         },
         updateGame(state, game) {
+            state.game_id = game.game_id || "";
+            state.round = game.round || 0;
+            state.a_steps = game.a_steps || "";
+            state.b_steps = game.b_steps || "";
             state.gamemap = game.map;
             state.a_id = game.a_id;
             state.a_sx = game.a_sx;
@@ -36,7 +57,8 @@ export default {
             state.b_sy = game.b_sy;
         },
         updateGameObject(state, gameObject) {
-            state.gameObject = gameObject;
+            // Canvas 对象自行更新，保持实例身份，避免 Vue 代理干扰销毁和归属判断。
+            state.gameObject = gameObject ? markRaw(gameObject) : null;
         },
         updateLoser(state, loser) {
             state.loser = loser;

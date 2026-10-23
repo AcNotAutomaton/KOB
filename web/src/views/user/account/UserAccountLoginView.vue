@@ -24,27 +24,20 @@
 import ContentField from '../../../components/ContentField.vue'
 import { useStore } from 'vuex'
 import { ref } from 'vue'
+import { useRoute } from 'vue-router'
 import router from '../../../router/index'
 
 const store = useStore()
+const route = useRoute()
 const username = ref('')
 const password = ref('')
 const error_message = ref('')
 
-const jwt_token = localStorage.getItem("jwt_token")
-if (jwt_token) {
-    store.commit("updateToken", jwt_token)
-    store.dispatch("getinfo", {
-        success() {
-            router.push({ name: "home_index" })
-            store.commit("updatePullingInfo", false)
-        },
-        error() {
-            store.commit("updatePullingInfo", false)
-        }
-    })
-} else {
-    store.commit("updatePullingInfo", false)
+const returnAfterLogin = () => {
+    const redirect = route.query.redirect;
+    const target = typeof redirect === "string" && redirect.startsWith("/") && !redirect.startsWith("//")
+        ? router.resolve(redirect) : null;
+    router.replace(target?.meta.requestAuth ? target.fullPath : { name: "home_index" });
 }
 
 const login = () => {
@@ -55,7 +48,10 @@ const login = () => {
         success() {
             store.dispatch("getinfo", {
                 success() {
-                    router.push({ name: 'home_index' })
+                    returnAfterLogin()
+                },
+                error() {
+                    error_message.value = "登录状态获取失败，请重试"
                 }
             })
         },

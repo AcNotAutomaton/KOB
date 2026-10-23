@@ -39,7 +39,7 @@
                             <li>
                                 <hr class="dropdown-divider">
                             </li>
-                            <li><a class="dropdown-item" href="#" @click="logout">退出</a></li>
+                            <li><a class="dropdown-item" href="#" @click.prevent="logout">退出</a></li>
                         </ul>
                     </li>
                 </ul>
@@ -62,20 +62,21 @@
 </template>
     
 <script setup>
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { computed } from 'vue'
 import { useStore } from 'vuex';
 
 const store = useStore();
 const route = useRoute();
+const router = useRouter();
 let route_name = computed(() => route.name)
 
-const logout = () => {
-    store.dispatch("logout");
+const logout = async () => {
+    await store.dispatch("logout");
+    await router.replace({ name: "user_account_login" });
 }
 </script>
-    
+
 <style scoped>
 
 </style>
-    

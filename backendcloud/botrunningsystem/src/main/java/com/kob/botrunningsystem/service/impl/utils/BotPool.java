@@ -5,10 +5,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -20,24 +20,25 @@ public class BotPool {
     private static final Logger log = LoggerFactory.getLogger(BotPool.class);
     private static final int POOL_SIZE = 4;
 
-    private final ExecutorService executor = Executors.newFixedThreadPool(POOL_SIZE, runnable -> {
+    private final ExecutorService executor = new ThreadPoolExecutor(POOL_SIZE, POOL_SIZE, 0, TimeUnit.MILLISECONDS,
+            new ArrayBlockingQueue<>(64), runnable -> {
         Thread t = new Thread(runnable, "bot-runner");
         t.setDaemon(true);
         return t;
     });
 
-    private final RestTemplate restTemplate;
+    private final Consumer consumer;
 
     @Autowired
-    public BotPool(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
+    public BotPool(Consumer consumer) {
+        this.consumer = consumer;
     }
 
-    public void addBot(Integer userId, String botCode, String input, Integer enemy) {
-        Bot bot = new Bot(userId, botCode, input, enemy);
+    public void addBot(Integer userId, String botCode, String input, Integer enemy, String gameId, Integer round) {
+        Bot bot = new Bot(userId, botCode, input, enemy, gameId, round);
         executor.submit(() -> {
             try {
-                new Consumer(restTemplate).consume(bot);
+                consumer.consume(bot);
             } catch (Exception e) {
                 log.error("Bot 任务执行异常，userId={}", userId, e);
             }

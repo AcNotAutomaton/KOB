@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.kob.backend.mapper.UserMapper;
 import com.kob.backend.pojo.User;
 import com.kob.backend.service.user.account.RegisterService;
+import com.kob.backend.utils.PasswordPolicy;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -48,8 +50,8 @@ public class RegisterServiceImpl implements RegisterService {
             return map;
         }
 
-        if (password.length() > 100 || confirmedPassword.length() > 100) {
-            map.put("error_message", "密码长度不能大于100");
+        if (PasswordPolicy.tooLong(password) || PasswordPolicy.tooLong(confirmedPassword)) {
+            map.put("error_message", "密码不能超过72字节，请缩短后重试");
             return map;
         }
 
@@ -69,7 +71,13 @@ public class RegisterServiceImpl implements RegisterService {
         String encodedPassword = passwordEncoder.encode(password);
         String photo = "https://cdn.acwing.com/media/user/profile/photo/117187_lg_64c833341e.jpg";
         User user = new User(null, username, encodedPassword, photo, 1500,0);
-        userMapper.insert(user);
+        try {
+            userMapper.insert(user);
+        } catch (DuplicateKeyException e) {
+            // 唯一索引是并发注册的最终保护，预查询不能代替数据库约束。
+            map.put("error_message", "用户名已存在");
+            return map;
+        }
 
         map.put("error_message", "success");
         return map;

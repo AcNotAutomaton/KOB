@@ -20,6 +20,7 @@ public class ReceiveBotMoveController {
         Integer direction = Integer.parseInt(Objects.requireNonNull(data.getFirst("direction")));
         Integer enemy = Integer.parseInt(Objects.requireNonNull(data.getFirst("enemy_id")));
 
-        return receiveBotMoveService.receiveBotMove(userId, direction, enemy);
+        return receiveBotMoveService.receiveBotMove(userId, direction, enemy,
+                data.getFirst("game_id"), Integer.valueOf(Objects.requireNonNull(data.getFirst("round"))));
     }
 }

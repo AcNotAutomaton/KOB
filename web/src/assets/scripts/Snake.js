@@ -37,6 +37,19 @@ export class Snake extends AcGameObject {
             [1, 1],
             [1, -1],
         ]
+        this.restore(info.steps || "");
+    }
+
+    restore(steps) {
+        for (const value of steps) {
+            const d = Number(value);
+            if (!Number.isInteger(d) || d < 0 || d > 3) break;
+            const head = this.cells[0];
+            this.cells.unshift(new Cell(head.r + this.dr[d], head.c + this.dc[d]));
+            this.step++;
+            if (!this.check_tail_increasing()) this.cells.pop();
+            this.eye_direction = d;
+        }
     }
 
     start() {
@@ -47,9 +60,9 @@ export class Snake extends AcGameObject {
         this.direction = d;
     }
 
-    check_tail_increasing() {  // 检测当前回合，蛇的长度是否增加
-        if (this.step <= 10) return true;
-        if (this.step % 3 === 1) return true;
+    check_tail_increasing(step = this.step) {  // 检测指定回合，蛇的长度是否增加
+        if (step <= 10) return true;
+        if (step % 3 === 1) return true;
         return false;
     }
 
@@ -72,26 +85,27 @@ export class Snake extends AcGameObject {
         const dy = this.next_cell.y - this.cells[0].y;
         const distance = Math.sqrt(dx * dx + dy * dy);
 
-        if (distance < this.eps) {  // 走到目标点了
+        const requested = Math.max(0, this.speed * this.timedelta / 1000);
+        const move_distance = Math.min(requested, distance);
+        if (distance > this.eps) {
+            this.cells[0].x += move_distance * dx / distance;
+            this.cells[0].y += move_distance * dy / distance;
+            if (!this.check_tail_increasing()) {
+                const k = this.cells.length;
+                const tail = this.cells[k - 1], tail_target = this.cells[k - 2];
+                tail.x += (tail_target.x - tail.x) * move_distance / distance;
+                tail.y += (tail_target.y - tail.y) * move_distance / distance;
+            }
+        }
+
+        // 低帧率或长帧也只前进到目标，剩余距离不足一帧时立即完成本步。
+        if (distance <= requested + this.eps) {
             this.cells[0] = this.next_cell;  // 添加一个新蛇头
             this.next_cell = null;
             this.status = "idle";  // 走完了，停下来
 
             if (!this.check_tail_increasing()) {  // 蛇不变长
                 this.cells.pop();
-            }
-        } else {
-            const move_distance = this.speed * this.timedelta / 1000;  // 每两帧之间走的距离
-            this.cells[0].x += move_distance * dx / distance;
-            this.cells[0].y += move_distance * dy / distance;
-
-            if (!this.check_tail_increasing()) {
-                const k = this.cells.length;
-                const tail = this.cells[k - 1], tail_target = this.cells[k - 2];
-                const tail_dx = tail_target.x - tail.x;
-                const tail_dy = tail_target.y - tail.y;
-                tail.x += move_distance * tail_dx / distance;
-                tail.y += move_distance * tail_dy / distance;
             }
         }
     }

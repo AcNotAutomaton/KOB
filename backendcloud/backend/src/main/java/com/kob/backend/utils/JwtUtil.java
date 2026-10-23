@@ -3,15 +3,18 @@ package com.kob.backend.utils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.core.env.Environment;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.UUID;
+import java.util.Arrays;
 
 @Component
 public class JwtUtil {
@@ -19,19 +22,29 @@ public class JwtUtil {
 
     public static final long JWT_TTL = 60 * 60 * 1000L * 24 * 14;  // 有效期14天
 
-    /**
-     * 签名密钥：优先读环境变量 KOB_JWT_KEY（生产环境必须配置），
-     * 未配置时退回开发默认值并打印警告。
-     * 密钥一旦变更，所有已签发的 token 立即失效，用户需要重新登录。
-     */
-    private static final String DEFAULT_DEV_KEY =
+    private static final String RETIRED_DEV_KEY =
             "kob-dev-only-jwt-secret-please-set-KOB_JWT_KEY-env-var-0123456789";
-    public static final String JWT_KEY = System.getenv().getOrDefault("KOB_JWT_KEY", DEFAULT_DEV_KEY);
+    private static final SecretKey DEV_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    private static volatile SecretKey signingKey = DEV_KEY;
 
-    static {
-        if (DEFAULT_DEV_KEY.equals(JWT_KEY)) {
-            log.warn("未设置环境变量 KOB_JWT_KEY，正在使用开发默认密钥；生产环境必须通过环境变量注入独立密钥");
+    public JwtUtil(Environment environment) {
+        signingKey = configuredKey(environment);
+    }
+
+    static SecretKey configuredKey(Environment environment) {
+        String value = environment.getProperty("kob.jwt.key", environment.getProperty("KOB_JWT_KEY"));
+        if (value == null || value.isBlank()) {
+            String[] profiles = environment.getActiveProfiles();
+            boolean development = profiles.length > 0
+                    && Arrays.stream(profiles).allMatch(p -> "dev".equals(p) || "test".equals(p));
+            if (!development) throw new IllegalStateException("必须配置 KOB_JWT_KEY，生产环境不允许自动生成 JWT 密钥");
+            log.warn("未配置 KOB_JWT_KEY，开发环境使用本次进程的随机密钥；重启后需重新登录");
+            return DEV_KEY;
         }
+        if (RETIRED_DEV_KEY.equals(value) || value.getBytes(StandardCharsets.UTF_8).length < 32) {
+            throw new IllegalStateException("KOB_JWT_KEY 必须是独立的至少32字节密钥，不能使用旧开发默认值");
+        }
+        return Keys.hmacShaKeyFor(value.getBytes(StandardCharsets.UTF_8));
     }
 
     public static String getUUID() {
@@ -59,8 +72,7 @@ public class JwtUtil {
     }
 
     public static SecretKey generalKey() {
-        // 统一按 UTF-8 原始字节解释密钥，长度需 >= 256 bit（HS256 的要求）
-        return Keys.hmacShaKeyFor(JWT_KEY.getBytes(StandardCharsets.UTF_8));
+        return signingKey;
     }
 
     public static Claims parseJWT(String jwt) {

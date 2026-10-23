@@ -1,11 +1,8 @@
 package com.kob.backend.consumer.utils;
 
 import com.alibaba.fastjson.JSONObject;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.kob.backend.consumer.WebSocketServer;
 import com.kob.backend.pojo.Bot;
-import com.kob.backend.pojo.GameBot;
-import com.kob.backend.pojo.Record;
 import com.kob.backend.pojo.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,9 +10,10 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Random;
+import java.util.UUID;
+import java.util.ArrayDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -32,12 +30,15 @@ public class Game implements Runnable {
     private final int[][] g;
     private final static int[] dx = {-1, 0, 1, 0}, dy = {0, 1, 0, -1};
     private final Player playerA, playerB;
+    private final String gameId = UUID.randomUUID().toString();
+    private volatile int round = 0;
+    private boolean acceptingMoves = true;
     private Integer nextStepA = null;
     private Integer nextStepB = null;
     private final ReentrantLock lock = new ReentrantLock();
     /** 两名玩家的下一步都就绪时唤醒裁判线程，替代原来的 50 轮 sleep 轮询 */
     private final Condition stepReady = lock.newCondition();
-    private String status = "playing";  // playing -> finished
+    private volatile String status = "playing";  // playing -> finished
     private String loser = "";  // all: 平局，A: A输，B: B输
     private final static String addBotUrl = "http://127.0.0.1:3002/bot/add/";
 
@@ -81,24 +82,72 @@ public class Game implements Runnable {
         return playerB;
     }
 
-    public void setNextStepA(Integer nextStepA) {
+    public String getGameId() { return gameId; }
+    public int getRound() { return round; }
+    public boolean isPlaying() { return "playing".equals(status); }
+
+    /** 与 move 广播共用锁，确保恢复快照先于后续回合消息发出。 */
+    public void sendStateTo(WebSocketServer connection, User opponent) {
         lock.lock();
         try {
-            this.nextStepA = nextStepA;
-            stepReady.signalAll();
+            if (!isPlaying() || connection.game != this) return;
+            JSONObject board = new JSONObject();
+            board.put("game_id", gameId);
+            board.put("round", round);
+            board.put("a_id", playerA.getId());
+            board.put("a_sx", playerA.getSx());
+            board.put("a_sy", playerA.getSy());
+            board.put("b_id", playerB.getId());
+            board.put("b_sx", playerB.getSx());
+            board.put("b_sy", playerB.getSy());
+            board.put("map", g);
+            // 已收到但尚未裁决/广播的方向不能进入恢复快照。
+            board.put("a_steps", playerA.getStepsString().substring(0, round));
+            board.put("b_steps", playerB.getStepsString().substring(0, round));
+            JSONObject resp = new JSONObject();
+            resp.put("event", "start-matching");
+            resp.put("opponent_username", opponent.getUsername());
+            resp.put("opponent_photo", opponent.getPhoto());
+            resp.put("game", board);
+            connection.sendMessage(resp.toJSONString());
         } finally {
             lock.unlock();
         }
     }
 
-    public void setNextStepB(Integer nextStepB) {
+    public boolean receivePlayerMove(Integer userId, String id, Integer moveRound, Integer direction) {
+        return receiveMove(userId, null, id, moveRound, direction, false);
+    }
+
+    public boolean receiveBotMove(Integer userId, Integer enemy, String id, Integer moveRound, Integer direction) {
+        return receiveMove(userId, enemy, id, moveRound, direction, true);
+    }
+
+    private boolean receiveMove(Integer userId, Integer enemy, String id, Integer moveRound,
+                                Integer direction, boolean bot) {
         lock.lock();
         try {
-            this.nextStepB = nextStepB;
+            if (!isPlaying() || !acceptingMoves || !gameId.equals(id)
+                    || moveRound == null || moveRound != round) return false;
+            boolean a = playerA.getId().equals(userId);
+            Player player = a ? playerA : playerB;
+            Player opponent = a ? playerB : playerA;
+            if (!player.getId().equals(userId) || (player.getBotId() > 0) != bot
+                    || bot && !opponent.getId().equals(enemy)) return false;
+            if (a ? nextStepA != null : nextStepB != null) return false;
+            // 非法操作记录为哨兵，由裁判判负，绝不用于数组下标。
+            int step = validDirection(direction) ? direction : -1;
+            if (a) nextStepA = step;
+            else nextStepB = step;
             stepReady.signalAll();
+            return true;
         } finally {
             lock.unlock();
         }
+    }
+
+    private static boolean validDirection(Integer direction) {
+        return direction != null && direction >= 0 && direction < 4;
     }
 
     public int[][] getG() {
@@ -106,20 +155,21 @@ public class Game implements Runnable {
     }
 
     private boolean check_connectivity(int sx, int sy, int tx, int ty) {
-        if (sx == tx && sy == ty) return true;
-        g[sx][sy] = 1;
-
-        for (int i = 0; i < 4; i ++ ) {
-            int x = sx + dx[i], y = sy + dy[i];
-            if (x >= 0 && x < this.rows && y >= 0 && y < this.cols && g[x][y] == 0) {
-                if (check_connectivity(x, y, tx, ty)) {
-                    g[sx][sy] = 0;
-                    return true;
+        boolean[][] visited = new boolean[rows][cols];
+        ArrayDeque<Cell> queue = new ArrayDeque<>();
+        queue.add(new Cell(sx, sy));
+        visited[sx][sy] = true;
+        while (!queue.isEmpty()) {
+            Cell cell = queue.removeFirst();
+            if (cell.x == tx && cell.y == ty) return true;
+            for (int d = 0; d < 4; d++) {
+                int x = cell.x + dx[d], y = cell.y + dy[d];
+                if (x >= 0 && x < rows && y >= 0 && y < cols && g[x][y] == 0 && !visited[x][y]) {
+                    visited[x][y] = true;
+                    queue.addLast(new Cell(x, y));
                 }
             }
         }
-
-        g[sx][sy] = 0;
         return false;
     }
 
@@ -189,6 +239,8 @@ public class Game implements Runnable {
         data.add("bot_code", player.getBotCode());
         data.add("enemy_id", enemy);
         data.add("input", getInput(player));
+        data.add("game_id", gameId);
+        data.add("round", String.valueOf(round));
         try {
             WebSocketServer.restTemplate.postForObject(addBotUrl, data, String.class);
         } catch (Exception e) {
@@ -216,8 +268,11 @@ public class Game implements Runnable {
                 if (rest <= 0) return false;
                 stepReady.await(rest, TimeUnit.MILLISECONDS);
             }
-            playerA.getSteps().add(nextStepA);
-            playerB.getSteps().add(nextStepB);
+            acceptingMoves = false;
+            if (validDirection(nextStepA) && validDirection(nextStepB)) {
+                playerA.getSteps().add(nextStepA);
+                playerB.getSteps().add(nextStepB);
+            }
             return true;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -230,7 +285,7 @@ public class Game implements Runnable {
     private boolean check_valid(List<Cell> cellsA, List<Cell> cellsB) {
         int n = cellsA.size();
         Cell cell = cellsA.get(n - 1);
-        if (g[cell.x][cell.y] == 1) return false;
+        if (cell.x < 0 || cell.x >= rows || cell.y < 0 || cell.y >= cols || g[cell.x][cell.y] == 1) return false;
 
         for (int i = 0; i < n - 1; i ++ ) {
             if (cellsA.get(i).x == cell.x && cellsA.get(i).y == cell.y)
@@ -246,6 +301,10 @@ public class Game implements Runnable {
     }
 
     private void judge() {  // 判断两名玩家下一步操作是否合法
+        if (!validDirection(nextStepA) || !validDirection(nextStepB)) {
+            finishForMissingOrInvalidMoves();
+            return;
+        }
         List<Cell> cellsA = playerA.getCells();
         List<Cell> cellsB = playerB.getCells();
         boolean validA = check_valid(cellsA, cellsB);
@@ -263,10 +322,10 @@ public class Game implements Runnable {
     }
 
     private void sendAllMessage(String message) {
-        if (WebSocketServer.users.get(playerA.getId()) != null)
-            WebSocketServer.users.get(playerA.getId()).sendMessage(message);
-        if (WebSocketServer.users.get(playerB.getId()) != null)
-            WebSocketServer.users.get(playerB.getId()).sendMessage(message);
+        for (Integer id : new Integer[]{playerA.getId(), playerB.getId()}) {
+            WebSocketServer ws = WebSocketServer.users.get(id);
+            if (ws != null && ws.game == this) ws.sendMessage(message);
+        }
     }
 
     private void sendMove() {  // 向两个Client传递移动信息
@@ -276,8 +335,12 @@ public class Game implements Runnable {
             resp.put("event", "move");
             resp.put("a_direction", nextStepA);
             resp.put("b_direction", nextStepB);
-            sendAllMessage(resp.toJSONString());
             nextStepA = nextStepB = null;
+            round++;
+            acceptingMoves = true;
+            resp.put("game_id", gameId);
+            resp.put("round", round);
+            sendAllMessage(resp.toJSONString());
         } finally {
             lock.unlock();
         }
@@ -293,78 +356,13 @@ public class Game implements Runnable {
         return res.toString();
     }
 
-    /** 原子更新用户天梯分与对局次数（rating = rating + delta），避免并发对局互相覆盖 */
-    private void updateUserRating(Integer userId, Integer ratingDelta) {
-        LambdaUpdateWrapper<User> wrapper = new LambdaUpdateWrapper<User>()
-                .eq(User::getId, userId)
-                .setSql("rating = rating + " + ratingDelta)
-                .setSql("times = times + 1");
-        WebSocketServer.userMapper.update(null, wrapper);
-    }
-
-    /** 原子更新 Bot 积分与对局次数；botId <= 0 表示亲自出马，无需更新 */
-    private void updateBotRating(Integer botId, Integer score) {
-        if (botId == null || botId <= 0) return;
-        LambdaUpdateWrapper<Bot> wrapper = new LambdaUpdateWrapper<Bot>()
-                .eq(Bot::getId, botId)
-                .setSql("rating = rating + " + score)
-                .setSql("count = count + 1");
-        WebSocketServer.botMapper.update(null, wrapper);
-    }
-
-    private void saveToDatabase() {
-        Integer ratingDeltaA = 0, ratingDeltaB = 0;
-        if ("A".equals(loser)) {
-            ratingDeltaA = -2;
-            ratingDeltaB = 5;
-            updateBotRating(playerA.getBotId(), -5);
-            updateBotRating(playerB.getBotId(), 5);
-        } else if ("B".equals(loser)) {
-            ratingDeltaA = 5;
-            ratingDeltaB = -2;
-            updateBotRating(playerA.getBotId(), 5);
-            updateBotRating(playerB.getBotId(), -5);
-        }
-
-        updateUserRating(playerA.getId(), ratingDeltaA);
-        updateUserRating(playerB.getId(), ratingDeltaB);
-
-        // id 为 null，由数据库自增主键生成，插入后 MyBatis-Plus 会回填 record.getId()
-        Record record = new Record(
-                null,
-                playerA.getId(),
-                playerA.getSx(),
-                playerA.getSy(),
-                playerB.getId(),
-                playerB.getSx(),
-                playerB.getSy(),
-                playerA.getStepsString(),
-                playerB.getStepsString(),
-                getMapString(),
-                loser,
-                new Date()
-        );
-
-        WebSocketServer.recordMapper.insert(record);
-
-        GameBot gameBot = new GameBot(
-                null,
-                record.getId(),
-                playerA.getBotId(),
-                playerA.getId(),
-                playerB.getBotId(),
-                playerB.getId()
-        );
-
-        WebSocketServer.gameBotMapper.insert(gameBot);
-    }
-
     private void sendResult() {  // 向两个Client公布结果
         JSONObject resp = new JSONObject();
         resp.put("event", "result");
         resp.put("loser", loser);
+        resp.put("game_id", gameId);
         try {
-            saveToDatabase();
+            WebSocketServer.gameResultService.save(playerA, playerB, getMapString(), loser);
         } catch (Exception e) {
             // 落库失败不影响向玩家公布结果
             log.error("对局结果落库失败，A={} B={}", playerA.getId(), playerB.getId(), e);
@@ -374,32 +372,45 @@ public class Game implements Runnable {
 
     @Override
     public void run() {
-        for (int i = 0; i < 1000; i ++ ) {
-            if (nextStep()) {  // 是否获取了两条蛇的下一步操作
-                judge();
-                if (status.equals("playing")) {
-                    sendMove();
+        try {
+            for (int i = 0; i < 1000; i ++ ) {
+                if (nextStep()) {  // 是否获取了两条蛇的下一步操作
+                    judge();
+                    if (status.equals("playing")) {
+                        sendMove();
+                    } else {
+                        sendResult();
+                        break;
+                    }
                 } else {
+                    lock.lock();
+                    try {
+                        finishForMissingOrInvalidMoves();
+                    } finally {
+                        lock.unlock();
+                    }
                     sendResult();
                     break;
                 }
-            } else {
-                status = "finished";
-                lock.lock();
-                try {
-                    if (nextStepA == null && nextStepB == null) {
-                        loser = "all";
-                    } else if (nextStepA == null) {
-                        loser = "A";
-                    } else {
-                        loser = "B";
-                    }
-                } finally {
-                    lock.unlock();
-                }
-                sendResult();
-                break;
             }
+            if (isPlaying()) {
+                status = "finished";
+                loser = "all";
+                sendResult();
+            }
+        } catch (Exception e) {
+            log.error("裁判异常，gameId={}", gameId, e);
+            status = "finished";
+            loser = "all";
+            sendResult();
+        } finally {
+            WebSocketServer.finishGame(this);
         }
+    }
+
+    private void finishForMissingOrInvalidMoves() {
+        status = "finished";
+        boolean invalidA = !validDirection(nextStepA), invalidB = !validDirection(nextStepB);
+        loser = invalidA && invalidB ? "all" : invalidA ? "A" : "B";
     }
 }

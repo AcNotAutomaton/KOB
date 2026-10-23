@@ -5,6 +5,7 @@ import com.kob.backend.pojo.Bot;
 import com.kob.backend.pojo.User;
 import com.kob.backend.service.impl.utils.UserDetailsImpl;
 import com.kob.backend.service.user.bot.UpdateService;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -75,19 +76,15 @@ public class UpdateServiceImpl implements UpdateService {
             return map;
         }
 
-        Bot new_bot = new Bot(
-                bot.getId(),
-                user.getId(),
-                title,
-                description,
-                content,
-                bot.getRating(),
-                0,
-                bot.getCreatetime(),
-                new Date()
-        );
-
-        botMapper.updateById(new_bot);
+        // 只更新可编辑字段，避免清空次数或覆盖同时结算的新积分。
+        UpdateWrapper<Bot> update = new UpdateWrapper<Bot>()
+                .eq("id", bot_id).eq("user_id", user.getId())
+                .set("title", title).set("description", description)
+                .set("content", content).set("modifytime", new Date());
+        if (botMapper.update(null, update) == 0) {
+            map.put("error_message", "Bot不存在或已被删除");
+            return map;
+        }
 
         map.put("error_message", "success");
 
